@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>FFCS Planner</title>
+
+  <style>
+    #grid {
+      display: grid;
+      grid-template-columns: 80px repeat(12, 80px);
+      gap: 4px;
+    }
+
+    .cell {
+      border: 1px solid black;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .cell:hover {
+      background-color: #f0f8ff;
+    }
+
+    .filled {
+      font-weight: bold;
+    }
+
+    #popover {
+      position: absolute;
+      display: none;
+      border: 1px solid black;
+      background: white;
+      padding: 8px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="popover"></div>
+  <div id="grid"></div>
+
+  <script>
+    let slotGroups = {};
+    let cellToSlotGroups = {};
+    let occupied = {};
+    let selectedGroups = {};
+    let cellLabels = {};
+
+    const popover = document.getElementById("popover");
+
+    const colors = [
+      "#ffb3ba", "#baffc9", "#bae1ff",
+      "#ffffba", "#ffdfba", "#c9c9ff"
+    ];
+
+    function getColor(group) {
+      let hash = 0;
+      for (let i = 0; i < group.length; i++) {
+        hash += group.charCodeAt(i);
+      }
+      return colors[hash % colors.length];
+    }
+
+    function isAtomic(group) {
+      return !group.includes('+');
+    }
+
+    // ---------------- COMBINATIONS ----------------
+
+    function generateTheoryCombos(slotGroups) {
+      const newGroups = {};
+
+      for (const group in slotGroups) {
+        const match = group.match(/^([A-Z]+)(\d)$/);
+        if (!match) continue;
+
+        const [_, prefix, num] = match;
+
+        const base = `${prefix}${num}`;
+        const ta = `T${prefix}${num}`;
+        const taa = `T${prefix}${prefix}${num}`;
+
+        if (slotGroups[base] && slotGroups[ta]) {
+          newGroups[`${base}+${ta}`] = [
+            ...slotGroups[base],
+            ...slotGroups[ta]
+          ];
+        }
+
+        if (slotGroups[base] && slotGroups[ta] && slotGroups[taa]) {
+          newGroups[`${base}+${ta}+${taa}`] = [
+            ...slotGroups[base],
+            ...slotGroups[ta],
+            ...slotGroups[taa]
+          ];
+        }
+      }
+
+      return newGroups;
+    }
+
+    function generateLabCombos(slotGroups) {
+      const newGroups = {};
+
+      for (const group in slotGroups) {
+        const match = group.match(/^L(\d+)$/);
+        if (!match) continue;
+
+        const n = parseInt(match[1]);
+
+        let pair;
+        if (n % 2 === 0) {
+          pair = [`L${n-1}`, `L${n}`];
+        } else {
+          pair = [`L${n}`, `L${n+1}`];
+        }
+
+        if (slotGroups[pair[0]] && slotGroups[pair[1]]) {
+          newGroups[`${pair[0]}+${pair[1]}`] = [
+            ...slotGroups[pair[0]],
+            ...slotGroups[pair[1]]
+          ];
+        }
+      }
+
+      return newGroups;
+    }
+
+    // ---------------- INIT ----------------
+
+    fetch('slotGroups.json')
+      .then(res => res.json())
+      .then(data => {
+        slotGroups = data;
+
+        const theoryCombos = generateTheoryCombos(slotGroups);
+        const labCombos = generateLabCombos(slotGroups);
+
+        slotGroups = {
+          ...slotGroups,
+          ...theoryCombos,
+          ...labCombos
+        };
+
+        // reverse map
+        for (const group in slotGroups) {
+          for (const cell of slotGroups[group]) {
+            if (!cellToSlotGroups[cell]) {
+              cellToSlotGroups[cell] = [];
+            }
+            cellToSlotGroups[cell].push(group);
+          }
+        }
+
+        buildGrid();
+        initializeGrid();
+      });
+
+    // ---------------- GRID ----------------
+
+    function buildGrid() {
+      const days = ["mon", "tue", "wed", "thu", "fri"];
+      const periods = Array.from({ length: 12 }, (_, i) => i + 1);
+
+      const grid = document.getElementById("grid");
+
+      grid.appendChild(document.createElement("div"));
+
+      periods.forEach(p => {
+        const el = document.createElement("div");
+        el.innerText = "P" + p;
+        el.style.fontWeight = "bold";
+        grid.appendChild(el);
+      });
+
+      days.forEach(day => {
+        const dayLabel = document.createElement("div");
+        dayLabel.innerText = day.toUpperCase();
+        dayLabel.style.fontWeight = "bold";
+        grid.appendChild(dayLabel);
+
+        periods.forEach(p => {
+          const cellId = `${day}_p${p}`;
+          const cell = document.createElement("div");
+
+          cell.className = "cell";
+          cell.dataset.cell = cellId;
+
+          const groups = cellToSlotGroups[cellId] || [];
+
+          const label = groups
+            .filter(isAtomic)
+            .sort()
+            .join('/');
+
+          cell.innerText = label;
+          cellLabels[cellId] = label;
+
+          grid.appendChild(cell);
+        });
+      });
+    }
+
+    // ---------------- INTERACTION ----------------
+
+    function initializeGrid() {
+      const cells = document.querySelectorAll(".cell");
+
+      cells.forEach(cell => {
+        cell.onclick = () => {
+          const cellId = cell.dataset.cell;
+          const group = occupied[cellId];
+
+          if (group) {
+            removeGroup(group);
+            return;
+          }
+
+          const rect = cell.getBoundingClientRect();
+
+          popover.style.top = rect.bottom + window.scrollY + 4 + "px";
+          popover.style.left = rect.left + window.scrollX + "px";
+          popover.style.display = "block";
+
+          const options = cellToSlotGroups[cellId] || [];
+          renderOptions(options);
+        };
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".cell") && !e.target.closest("#popover")) {
+          popover.style.display = "none";
+        }
+      });
+    }
+
+    function selectGroup(group) {
+      const cellsToFill = slotGroups[group];
+
+      for (const cell of cellsToFill) {
+        if (occupied[cell] && occupied[cell] !== group) {
+          return;
+        }
+      }
+
+      selectedGroups[group] = true;
+
+      for (const cell of cellsToFill) {
+        occupied[cell] = group;
+
+        const el = document.querySelector(`[data-cell="${cell}"]`);
+        if (el) {
+          el.classList.add("filled");
+          el.style.background = getColor(group);
+          el.innerText = group;
+        }
+      }
+
+      popover.style.display = "none";
+    }
+
+    function removeGroup(group) {
+      delete selectedGroups[group];
+
+      for (const cell of slotGroups[group]) {
+        delete occupied[cell];
+
+        const el = document.querySelector(`[data-cell="${cell}"]`);
+        if (el) {
+          el.classList.remove("filled");
+          el.style.background = "";
+          el.innerText = cellLabels[cell];
+        }
+      }
+
+      popover.style.display = "none";
+    }
+
+    function renderOptions(options) {
+      popover.innerHTML = "";
+
+      options.forEach(group => {
+        const btn = document.createElement("div");
+        btn.innerText = group;
+        btn.style.padding = "6px";
+        btn.style.cursor = "pointer";
+
+        btn.onclick = () => selectGroup(group);
+
+        popover.appendChild(btn);
+      });
+    }
+
+  </script>
+
+</body>
+
+</html>
