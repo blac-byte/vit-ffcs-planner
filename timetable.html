@@ -9,7 +9,7 @@
     #grid {
       display: grid;
       grid-template-columns: 80px repeat(12, 80px);
-      gap: 4px;
+      gap: 2px;
     }
 
     .cell {
@@ -25,7 +25,7 @@
     }
 
     .cell:hover {
-      background-color: #f0f8ff;
+      background-color: #fffbfb;
     }
 
     .filled {
@@ -35,10 +35,33 @@
     #popover {
       position: absolute;
       display: none;
-      border: 1px solid black;
+      border-radius: 5px;
       background: white;
       padding: 8px;
       z-index: 1000;
+      box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4);
+    }
+
+    #matrixContainer {
+      margin-top: 12px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    td,
+    th {
+      border: 1px solid #ccc;
+      padding: 6px;
+      font-size: 13px;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
     }
   </style>
 </head>
@@ -47,6 +70,21 @@
 
   <div id="popover"></div>
   <div id="grid"></div>
+  <audio class="sound-bite" src="faa.mp3"></audio>
+
+  <button id="toggleMatrix">Toggle Subjects</button>
+
+  <div id="matrixContainer">
+    <table id="matrix">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Teacher</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
     let slotGroups = {};
@@ -54,6 +92,7 @@
     let occupied = {};
     let selectedGroups = {};
     let cellLabels = {};
+    let teacherData = {};
 
     const popover = document.getElementById("popover");
 
@@ -74,7 +113,7 @@
       return !group.includes('+');
     }
 
-    // ---------------- COMBINATIONS ----------------
+    // ---------- COMBINATIONS ----------
 
     function generateTheoryCombos(slotGroups) {
       const newGroups = {};
@@ -119,9 +158,9 @@
 
         let pair;
         if (n % 2 === 0) {
-          pair = [`L${n-1}`, `L${n}`];
+          pair = [`L${n - 1}`, `L${n}`];
         } else {
-          pair = [`L${n}`, `L${n+1}`];
+          pair = [`L${n}`, `L${n + 1}`];
         }
 
         if (slotGroups[pair[0]] && slotGroups[pair[1]]) {
@@ -135,29 +174,25 @@
       return newGroups;
     }
 
-    // ---------------- INIT ----------------
+    // ---------- INIT ----------
 
     fetch('slotGroups.json')
       .then(res => res.json())
       .then(data => {
         slotGroups = data;
 
-        const theoryCombos = generateTheoryCombos(slotGroups);
-        const labCombos = generateLabCombos(slotGroups);
-
         slotGroups = {
           ...slotGroups,
-          ...theoryCombos,
-          ...labCombos
+          ...generateTheoryCombos(slotGroups),
+          ...generateLabCombos(slotGroups)
         };
 
-        // reverse map
         for (const group in slotGroups) {
           for (const cell of slotGroups[group]) {
             if (!cellToSlotGroups[cell]) {
-              cellToSlotGroups[cell] = [];
+              cellToSlotGroups[cell] = new Set();
             }
-            cellToSlotGroups[cell].push(group);
+            cellToSlotGroups[cell].add(group);
           }
         }
 
@@ -165,7 +200,7 @@
         initializeGrid();
       });
 
-    // ---------------- GRID ----------------
+    // ---------- GRID ----------
 
     function buildGrid() {
       const days = ["mon", "tue", "wed", "thu", "fri"];
@@ -195,12 +230,8 @@
           cell.className = "cell";
           cell.dataset.cell = cellId;
 
-          const groups = cellToSlotGroups[cellId] || [];
-
-          const label = groups
-            .filter(isAtomic)
-            .sort()
-            .join('/');
+          const groups = Array.from(cellToSlotGroups[cellId] || []);
+          const label = groups.filter(isAtomic).sort().join('/');
 
           cell.innerText = label;
           cellLabels[cellId] = label;
@@ -210,7 +241,7 @@
       });
     }
 
-    // ---------------- INTERACTION ----------------
+    // ---------- INTERACTION ----------
 
     function initializeGrid() {
       const cells = document.querySelectorAll(".cell");
@@ -227,12 +258,12 @@
 
           const rect = cell.getBoundingClientRect();
 
-          popover.style.top = rect.bottom + window.scrollY + 4 + "px";
+          popover.style.top = rect.bottom + window.scrollY + "px";
           popover.style.left = rect.left + window.scrollX + "px";
           popover.style.display = "block";
 
-          const options = cellToSlotGroups[cellId] || [];
-          renderOptions(options);
+          const options = Array.from(cellToSlotGroups[cellId] || []);
+          renderOptions(options, cellId);
         };
       });
 
@@ -243,16 +274,49 @@
       });
     }
 
-    function selectGroup(group) {
+    function selectGroup(group, subject) {
       const cellsToFill = slotGroups[group];
+      const conflictCells = [];
 
       for (const cell of cellsToFill) {
         if (occupied[cell] && occupied[cell] !== group) {
-          return;
+          conflictCells.push(cell);
         }
       }
 
-      selectedGroups[group] = true;
+      if (conflictCells.length > 0) {
+        // Popover feedback
+        console.log('hi');
+        const soundBite = document.querySelector(".sound-bite");
+        soundBite.currentTime = 0;
+        soundBite.play();
+        
+        popover.style.boxShadow = "0 0 10px rgba(255,0,0,0.8)";
+        popover.style.border = "1px solid red";
+
+        // Cell highlight
+        conflictCells.forEach(cell => {
+          const el = document.querySelector(`[data-cell="${cell}"]`);
+          if (!el) return;
+
+          const prev = el.style.background;
+          el.style.background = "rgba(255,0,0,0.6)";
+
+          setTimeout(() => {
+            el.style.background = prev || "";
+          }, 400);
+        });
+
+        // Reset popover style
+        setTimeout(() => {
+          popover.style.boxShadow = "0px 0px 5px rgba(0,0,0,0.4)";
+          popover.style.border = "";
+        }, 400);
+
+        return;
+      }
+
+      selectedGroups[group] = subject || true;
 
       for (const cell of cellsToFill) {
         occupied[cell] = group;
@@ -261,15 +325,17 @@
         if (el) {
           el.classList.add("filled");
           el.style.background = getColor(group);
-          el.innerText = group;
+          el.innerText = subject || group;
         }
       }
 
+      renderMatrix();
       popover.style.display = "none";
     }
 
     function removeGroup(group) {
       delete selectedGroups[group];
+      delete teacherData[group];
 
       for (const cell of slotGroups[group]) {
         delete occupied[cell];
@@ -282,11 +348,18 @@
         }
       }
 
+      renderMatrix();
       popover.style.display = "none";
     }
 
-    function renderOptions(options) {
+    function renderOptions(options, cellId) {
       popover.innerHTML = "";
+
+      const input = document.createElement("input");
+      input.placeholder = "Subject (optional)";
+      input.style.marginBottom = "8px";
+
+      popover.appendChild(input);
 
       options.forEach(group => {
         const btn = document.createElement("div");
@@ -294,11 +367,52 @@
         btn.style.padding = "6px";
         btn.style.cursor = "pointer";
 
-        btn.onclick = () => selectGroup(group);
+        btn.onclick = () => selectGroup(group, input.value.trim());
 
         popover.appendChild(btn);
       });
     }
+
+    // ---------- MATRIX ----------
+
+    function renderMatrix() {
+      const tbody = document.querySelector("#matrix tbody");
+      tbody.innerHTML = "";
+
+      for (const group in selectedGroups) {
+        const row = document.createElement("tr");
+
+        const subjectCell = document.createElement("td");
+        const subject = selectedGroups[group];
+        subjectCell.innerText = subject === true ? group : subject;
+
+        const teacherCell = document.createElement("td");
+        const input = document.createElement("input");
+
+        input.value = teacherData[group] || "";
+
+        input.oninput = (e) => {
+          teacherData[group] = e.target.value;
+        };
+
+        teacherCell.appendChild(input);
+
+        row.appendChild(subjectCell);
+        row.appendChild(teacherCell);
+
+        tbody.appendChild(row);
+      }
+    }
+
+    // ---------- TOGGLE ----------
+
+    const toggleBtn = document.getElementById("toggleMatrix");
+    const matrixContainer = document.getElementById("matrixContainer");
+
+    toggleBtn.onclick = () => {
+      matrixContainer.style.display =
+        matrixContainer.style.display === "none" ? "block" : "none";
+    };
 
   </script>
 
