@@ -352,8 +352,46 @@
       popover.style.display = "none";
     }
 
+    function isSingleLab(group) {
+      return /^L\d+$/.test(group);
+    }
+    
+    function sortGroups(groups) {
+      return groups.sort((a, b) => {
+        const aIsLab = a.startsWith("L");
+        const bIsLab = b.startsWith("L");
+
+        // theory first
+        if (aIsLab !== bIsLab) return aIsLab ? 1 : -1;
+
+        // LAB sorting
+        if (aIsLab && bIsLab) {
+          const aNum = parseInt(a.match(/\d+/)[0]);
+          const bNum = parseInt(b.match(/\d+/)[0]);
+          return aNum - bNum;
+        }
+
+        // THEORY sorting
+        const getBase = g => g.split("+")[0];
+        const getLevel = g => g.split("+").length;
+
+        const aBase = getBase(a);
+        const bBase = getBase(b);
+
+        if (aBase !== bBase) return aBase.localeCompare(bBase);
+
+        return getLevel(a) - getLevel(b);
+      });
+    }
+
     function renderOptions(options, cellId) {
       popover.innerHTML = "";
+
+      // ❌ remove single labs
+      let filtered = options.filter(g => !isSingleLab(g));
+
+      // ✅ sort properly
+      filtered = sortGroups(filtered);
 
       const input = document.createElement("input");
       input.placeholder = "Subject (optional)";
@@ -361,7 +399,7 @@
 
       popover.appendChild(input);
 
-      options.forEach(group => {
+      filtered.forEach(group => {
         const btn = document.createElement("div");
         btn.innerText = group;
         btn.style.padding = "6px";
