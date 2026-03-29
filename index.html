@@ -2,6 +2,7 @@
 <html>
 
 <head>
+  <meta name="google-site-verification" content="jzOZmh26huxwERt7PVY54Uy-NXI8SCBiO41QuqQjELo" />
   <meta charset="UTF-8">
   <title>FFCS Planner</title>
 
@@ -22,6 +23,9 @@
       user-select: none;
       font-size: 12px;
       text-align: center;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
     .cell:hover {
@@ -72,7 +76,13 @@
   <div id="grid"></div>
   <audio class="sound-bite" src="faa.mp3"></audio>
 
-  <button id="toggleMatrix">Toggle Subjects</button>
+  <button id="toggleMatrix" style="border: none; 
+                                   background-color: rgb(63, 76, 255); 
+                                   color: white; 
+                                   padding: 6px 16px; 
+                                   border-radius: 30px; 
+                                   margin-top: 10px;">Toggle Subjects
+  </button>
 
   <div id="matrixContainer">
     <table id="matrix">
@@ -111,6 +121,24 @@
 
     function isAtomic(group) {
       return !group.includes('+');
+    }
+
+    function sortAtomicTheoryFirst(a, b) {
+      const aIsLab = a.startsWith('L');
+      const bIsLab = b.startsWith('L');
+
+      if (aIsLab !== bIsLab) {
+        return aIsLab ? 1 : -1;
+      }
+
+      return a.localeCompare(b);
+    }
+
+    function formatCellText(text) {
+      if (text.length > 9) {
+        return text.slice(0, 9) + '...';
+      }
+      return text;
     }
 
     // ---------- COMBINATIONS ----------
@@ -231,9 +259,10 @@
           cell.dataset.cell = cellId;
 
           const groups = Array.from(cellToSlotGroups[cellId] || []);
-          const label = groups.filter(isAtomic).sort().join('/');
+          const label = groups.filter(isAtomic).sort(sortAtomicTheoryFirst).join('/');
 
-          cell.innerText = label;
+          cell.innerText = formatCellText(label);
+          cell.title = label;
           cellLabels[cellId] = label;
 
           grid.appendChild(cell);
@@ -290,7 +319,7 @@
         const soundBite = document.querySelector(".sound-bite");
         soundBite.currentTime = 0;
         soundBite.play();
-        
+
         popover.style.boxShadow = "0 0 10px rgba(255,0,0,0.8)";
         popover.style.border = "1px solid red";
 
@@ -325,7 +354,9 @@
         if (el) {
           el.classList.add("filled");
           el.style.background = getColor(group);
-          el.innerText = subject || group;
+          const displayText = subject || group;
+          el.innerText = formatCellText(displayText);
+          el.title = displayText;
         }
       }
 
@@ -344,7 +375,8 @@
         if (el) {
           el.classList.remove("filled");
           el.style.background = "";
-          el.innerText = cellLabels[cell];
+          el.innerText = formatCellText(cellLabels[cell]);
+          el.title = cellLabels[cell];
         }
       }
 
@@ -355,7 +387,7 @@
     function isSingleLab(group) {
       return /^L\d+$/.test(group);
     }
-    
+
     function sortGroups(groups) {
       return groups.sort((a, b) => {
         const aIsLab = a.startsWith("L");
