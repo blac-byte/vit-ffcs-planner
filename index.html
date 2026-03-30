@@ -15,6 +15,7 @@
 
     .cell {
       border: 1px solid black;
+      background-color: rgb(220, 220, 220);
       height: 60px;
       display: flex;
       align-items: center;
@@ -30,6 +31,7 @@
 
     .cell:hover {
       background-color: #fffbfb;
+      transition: background-color 0.3s;
     }
 
     .filled {
@@ -74,7 +76,6 @@
 
   <div id="popover"></div>
   <div id="grid"></div>
-  <audio class="sound-bite" src="faa.mp3"></audio>
 
   <button id="toggleMatrix" style="border: none; 
                                    background-color: rgb(63, 76, 255); 
@@ -96,396 +97,407 @@
     </table>
   </div>
 
-  <script>
-    let slotGroups = {};
-    let cellToSlotGroups = {};
-    let occupied = {};
-    let selectedGroups = {};
-    let cellLabels = {};
-    let teacherData = {};
+<script>
 
-    const popover = document.getElementById("popover");
+let slotGroups = {};
+let cellToSlotGroups = {};
+let cellToSortedGroups = {};
+let occupied = {};
+let selectedGroups = {};
+let teacherData = {};
+let cellLabels = {};
+let cellElements = {};
+let audio;
 
-    const colors = [
-      "#ffb3ba", "#baffc9", "#bae1ff",
-      "#ffffba", "#ffdfba", "#c9c9ff"
-    ];
+const popover = document.getElementById("popover");
 
-    function getColor(group) {
-      let hash = 0;
-      for (let i = 0; i < group.length; i++) {
-        hash += group.charCodeAt(i);
-      }
-      return colors[hash % colors.length];
-    }
+const colors = ["#ffb3ba","#baffc9","#bae1ff","#ffffba","#ffdfba","#c9c9ff"];
 
-    function isAtomic(group) {
-      return !group.includes('+');
-    }
+const getColor = g => {
+  let h = 0;
+  for (let i = 0; i < g.length; i++) h += g.charCodeAt(i);
+  return colors[h % colors.length];
+};
 
-    function sortAtomicTheoryFirst(a, b) {
-      const aIsLab = a.startsWith('L');
-      const bIsLab = b.startsWith('L');
+const isAtomic = g => !g.includes('+');
+const isSingleLab = g => /^L\d+$/.test(g);
 
-      if (aIsLab !== bIsLab) {
-        return aIsLab ? 1 : -1;
-      }
+const formatCellText = t => t.length > 9 ? t.slice(0,9)+"…" : t;
 
-      return a.localeCompare(b);
-    }
+// ---------- COMBINATIONS ----------
 
-    function formatCellText(text) {
-      if (text.length > 9) {
-        return text.slice(0, 9) + '...';
-      }
-      return text;
-    }
+function generateTheoryCombos(data) {
+  const out = {};
+  for (const g in data) {
+    const m = g.match(/^([A-Z]+)(\d)$/);
+    if (!m) continue;
 
-    // ---------- COMBINATIONS ----------
+    const [_, p, n] = m;
+    const base = `${p}${n}`;
+    const ta = `T${p}${n}`;
+    const taa = `T${p}${p}${n}`;
 
-    function generateTheoryCombos(slotGroups) {
-      const newGroups = {};
+    if (data[base] && data[ta])
+      out[`${base}+${ta}`] = [...data[base], ...data[ta]];
 
-      for (const group in slotGroups) {
-        const match = group.match(/^([A-Z]+)(\d)$/);
-        if (!match) continue;
+    if (data[base] && data[ta] && data[taa])
+      out[`${base}+${ta}+${taa}`] = [...data[base], ...data[ta], ...data[taa]];
+  }
+  return out;
+}
 
-        const [_, prefix, num] = match;
+function generateLabCombos(data) {
+  const out = {};
+  for (const g in data) {
+    const m = g.match(/^L(\d+)$/);
+    if (!m) continue;
 
-        const base = `${prefix}${num}`;
-        const ta = `T${prefix}${num}`;
-        const taa = `T${prefix}${prefix}${num}`;
+    const n = +m[1];
+    const pair = n % 2 ? [`L${n}`,`L${n+1}`] : [`L${n-1}`,`L${n}`];
 
-        if (slotGroups[base] && slotGroups[ta]) {
-          newGroups[`${base}+${ta}`] = [
-            ...slotGroups[base],
-            ...slotGroups[ta]
-          ];
-        }
+    if (data[pair[0]] && data[pair[1]])
+      out[`${pair[0]}+${pair[1]}`] = [...data[pair[0]], ...data[pair[1]]];
+  }
+  return out;
+}
 
-        if (slotGroups[base] && slotGroups[ta] && slotGroups[taa]) {
-          newGroups[`${base}+${ta}+${taa}`] = [
-            ...slotGroups[base],
-            ...slotGroups[ta],
-            ...slotGroups[taa]
-          ];
-        }
-      }
+// ---------- INIT ----------
 
-      return newGroups;
-    }
+slotGroups = {
+              "A1": ["mon_p1", "wed_p2"],
+              "A2": ["mon_p7", "wed_p8"],
+              "B1": ["tue_p1", "thu_p2"],
+              "B2": ["tue_p7", "thu_p8"],
+              "C1": ["wed_p1", "fri_p2"],
+              "C2": ["wed_p7", "fri_p8"],
+              "D1": ["thu_p1", "mon_p3"],
+              "D2": ["thu_p7", "mon_p9"],
+              "E1": ["fri_p1", "tue_p3"],
+              "E2": ["fri_p7", "tue_p9"],
+              "F1": ["mon_p2", "wed_p3"],
+              "F2": ["mon_p8", "wed_p9"],
+              "G1": ["tue_p2", "thu_p3"],
+              "G2": ["tue_p8", "thu_p9"],
+              "TA1": ["fri_p3"],
+              "TA2": ["fri_p9"],
+              "TB1": ["mon_p4"],
+              "TB2": ["mon_p10"],
+              "TC1": ["tue_p4"],
+              "TC2": ["tue_p10"],
+              "TD1": ["wed_p4"],
+              "X": ["wed_p5"],
+              "Y": ["wed_p6"],
+              "TD2": ["wed_p10"],
+              "TE1": ["thu_p4"],
+              "TE2": ["thu_p10"],
+              "TF1": ["fri_p4"],
+              "TF2": ["fri_p10"],
+              "TG1": ["mon_p5"],
+              "TG2": ["mon_p11"],
+              "TAA1": ["tue_p5"],
+              "TAA2": ["tue_p11"],
+              "TBB2": ["wed_p11"],
+              "TCC1": ["thu_p5"],
+              "TCC2": ["thu_p11"],
+              "TDD1": ["fri_p5"],
+              "TDD2": ["fri_p11"],
+              "L1": ["mon_p1"],
+              "L2": ["mon_p2"],
+              "L3": ["mon_p3"],
+              "L4": ["mon_p4"],
+              "L5": ["mon_p5"],
+              "L6": ["mon_p6"],
+              "L7": ["tue_p1"],
+              "L8": ["tue_p2"],
+              "L9": ["tue_p3"],
+              "L10": ["tue_p4"],
+              "L11": ["tue_p5"],
+              "L12": ["tue_p6"],
+              "L13": ["wed_p1"],
+              "L14": ["wed_p2"],
+              "L15": ["wed_p3"],
+              "L16": ["wed_p4"],
+              "L19": ["thu_p1"],
+              "L20": ["thu_p2"],
+              "L21": ["thu_p3"],
+              "L22": ["thu_p4"],
+              "L23": ["thu_p5"],
+              "L24": ["thu_p6"],
+              "L25": ["fri_p1"],
+              "L26": ["fri_p2"],
+              "L27": ["fri_p3"],
+              "L28": ["fri_p4"],
+              "L29": ["fri_p5"],
+              "L30": ["fri_p6"],
+              "L31": ["mon_p7"],
+              "L32": ["mon_p8"],
+              "L33": ["mon_p9"],
+              "L34": ["mon_p10"],
+              "L35": ["mon_p11"],
+              "L36": ["mon_p12"],
+              "L37": ["tue_p7"],
+              "L38": ["tue_p8"],
+              "L39": ["tue_p9"],
+              "L40": ["tue_p10"],
+              "L41": ["tue_p11"],
+              "L42": ["tue_p12"],
+              "L43": ["wed_p7"],
+              "L44": ["wed_p8"],
+              "L45": ["wed_p9"],
+              "L46": ["wed_p10"],
+              "L47": ["wed_p11"],
+              "L48": ["wed_p12"],
+              "L49": ["thu_p7"],
+              "L50": ["thu_p8"],
+              "L51": ["thu_p9"],
+              "L52": ["thu_p10"],
+              "L53": ["thu_p11"],
+              "L54": ["thu_p12"],
+              "L55": ["fri_p7"],
+              "L56": ["fri_p8"],
+              "L57": ["fri_p9"],
+              "L58": ["fri_p10"],
+              "L59": ["fri_p11"],
+              "L60": ["fri_p12"]
 
-    function generateLabCombos(slotGroups) {
-      const newGroups = {};
 
-      for (const group in slotGroups) {
-        const match = group.match(/^L(\d+)$/);
-        if (!match) continue;
-
-        const n = parseInt(match[1]);
-
-        let pair;
-        if (n % 2 === 0) {
-          pair = [`L${n - 1}`, `L${n}`];
-        } else {
-          pair = [`L${n}`, `L${n + 1}`];
-        }
-
-        if (slotGroups[pair[0]] && slotGroups[pair[1]]) {
-          newGroups[`${pair[0]}+${pair[1]}`] = [
-            ...slotGroups[pair[0]],
-            ...slotGroups[pair[1]]
-          ];
-        }
-      }
-
-      return newGroups;
-    }
-
-    // ---------- INIT ----------
-
-    fetch('slotGroups.json')
-      .then(res => res.json())
-      .then(data => {
-        slotGroups = data;
-
-        slotGroups = {
-          ...slotGroups,
-          ...generateTheoryCombos(slotGroups),
-          ...generateLabCombos(slotGroups)
-        };
-
-        for (const group in slotGroups) {
-          for (const cell of slotGroups[group]) {
-            if (!cellToSlotGroups[cell]) {
-              cellToSlotGroups[cell] = new Set();
             }
-            cellToSlotGroups[cell].add(group);
-          }
-        }
 
-        buildGrid();
-        initializeGrid();
-      });
 
-    // ---------- GRID ----------
+slotGroups = {
+  ...slotGroups,
+  ...generateTheoryCombos(slotGroups),
+  ...generateLabCombos(slotGroups)
+};
 
-    function buildGrid() {
-      const days = ["mon", "tue", "wed", "thu", "fri"];
-      const periods = Array.from({ length: 12 }, (_, i) => i + 1);
+// reverse map
+for (const g in slotGroups) {
+  for (const c of slotGroups[g]) {
+    if (!cellToSlotGroups[c]) cellToSlotGroups[c] = new Set();
+    cellToSlotGroups[c].add(g);
+  }
+}
 
-      const grid = document.getElementById("grid");
+// precompute sorted groups per cell
+function sortGroups(groups) {
+  return groups.sort((a,b)=>{
+    const aLab = a.startsWith("L");
+    const bLab = b.startsWith("L");
 
-      grid.appendChild(document.createElement("div"));
+    if (aLab !== bLab) return aLab ? 1 : -1;
 
-      periods.forEach(p => {
-        const el = document.createElement("div");
-        el.innerText = "P" + p;
-        el.style.fontWeight = "bold";
-        grid.appendChild(el);
-      });
-
-      days.forEach(day => {
-        const dayLabel = document.createElement("div");
-        dayLabel.innerText = day.toUpperCase();
-        dayLabel.style.fontWeight = "bold";
-        grid.appendChild(dayLabel);
-
-        periods.forEach(p => {
-          const cellId = `${day}_p${p}`;
-          const cell = document.createElement("div");
-
-          cell.className = "cell";
-          cell.dataset.cell = cellId;
-
-          const groups = Array.from(cellToSlotGroups[cellId] || []);
-          const label = groups.filter(isAtomic).sort(sortAtomicTheoryFirst).join('/');
-
-          cell.innerText = formatCellText(label);
-          cell.title = label;
-          cellLabels[cellId] = label;
-
-          grid.appendChild(cell);
-        });
-      });
+    if (aLab) {
+      return +a.match(/\d+/)[0] - +b.match(/\d+/)[0];
     }
 
-    // ---------- INTERACTION ----------
+    const aBase = a.split("+")[0];
+    const bBase = b.split("+")[0];
 
-    function initializeGrid() {
-      const cells = document.querySelectorAll(".cell");
+    if (aBase !== bBase) return aBase.localeCompare(bBase);
 
-      cells.forEach(cell => {
-        cell.onclick = () => {
-          const cellId = cell.dataset.cell;
-          const group = occupied[cellId];
+    return a.split("+").length - b.split("+").length;
+  });
+}
 
-          if (group) {
-            removeGroup(group);
-            return;
-          }
+for (const c in cellToSlotGroups) {
+  let arr = Array.from(cellToSlotGroups[c]).filter(g=>!isSingleLab(g));
+  cellToSortedGroups[c] = sortGroups(arr);
+}
 
-          const rect = cell.getBoundingClientRect();
+// ---------- GRID ----------
 
-          popover.style.top = rect.bottom + window.scrollY + "px";
-          popover.style.left = rect.left + window.scrollX + "px";
-          popover.style.display = "block";
+function buildGrid() {
+  const days = ["mon","tue","wed","thu","fri"];
+  const periods = Array.from({length:12},(_,i)=>i+1);
+  const grid = document.getElementById("grid");
 
-          const options = Array.from(cellToSlotGroups[cellId] || []);
-          renderOptions(options, cellId);
-        };
-      });
+  grid.appendChild(document.createElement("div"));
 
-      document.addEventListener("click", (e) => {
-        if (!e.target.closest(".cell") && !e.target.closest("#popover")) {
-          popover.style.display = "none";
-        }
-      });
+  periods.forEach(p=>{
+    const el = document.createElement("div");
+    el.textContent = "P"+p;
+    el.style.fontWeight="bold";
+    grid.appendChild(el);
+  });
+
+  days.forEach(d=>{
+    const day = document.createElement("div");
+    day.textContent = d.toUpperCase();
+    day.style.fontWeight="bold";
+    grid.appendChild(day);
+
+    periods.forEach(p=>{
+      const id = `${d}_p${p}`;
+      const el = document.createElement("div");
+
+      el.className="cell";
+      el.dataset.cell=id;
+
+      const label = (cellToSlotGroups[id]||[])
+        ? Array.from(cellToSlotGroups[id])
+          .filter(isAtomic)
+          .sort()
+          .join('/')
+        : "";
+
+      el.textContent = formatCellText(label);
+      el.title = label;
+
+      cellLabels[id] = label;
+      cellElements[id] = el;
+
+      grid.appendChild(el);
+    });
+  });
+}
+
+// ---------- INTERACTION ----------
+
+function init() {
+  document.querySelectorAll(".cell").forEach(cell=>{
+    cell.addEventListener("pointerdown", ()=>{
+      const id = cell.dataset.cell;
+      const group = occupied[id];
+
+      if (group) return removeGroup(group);
+
+      showPopover(cell, id);
+    });
+  });
+
+  document.addEventListener("pointerdown", e=>{
+    if (!e.target.closest(".cell") && !e.target.closest("#popover"))
+      popover.style.display="none";
+  });
+}
+
+function showPopover(cell, id) {
+  const rect = cell.getBoundingClientRect();
+
+  popover.style.top = rect.bottom + window.scrollY + "px";
+  popover.style.left = rect.left + window.scrollX + "px";
+  popover.style.display = "block";
+
+  renderOptions(id);
+}
+
+function getConflictCount(group) {
+  let count = 0;
+  for (const c of slotGroups[group]) {
+    if (occupied[c] && occupied[c] !== group) count++;
+  }
+  return count;
+}
+
+function renderOptions(cellId) {
+  popover.innerHTML = "";
+
+  const frag = document.createDocumentFragment();
+
+  const input = document.createElement("input");
+  input.placeholder = "Subject (optional)";
+  input.style.marginBottom = "8px";
+  frag.appendChild(input);
+
+  for (const g of cellToSortedGroups[cellId] || []) {
+    const btn = document.createElement("div");
+    btn.textContent = g.replaceAll("+"," + ");
+    btn.style.padding = "6px";
+    btn.style.cursor = "pointer";
+
+    const conflicts = getConflictCount(g);
+    if (conflicts > 0) {
+      btn.style.opacity = "0.5";
+      btn.style.color = "red";
+      btn.textContent += ` (${conflicts})`;
     }
 
-    function selectGroup(group, subject) {
-      const cellsToFill = slotGroups[group];
-      const conflictCells = [];
+    btn.addEventListener("pointerdown", ()=>{
+      selectGroup(g, input.value.trim());
+    });
 
-      for (const cell of cellsToFill) {
-        if (occupied[cell] && occupied[cell] !== group) {
-          conflictCells.push(cell);
-        }
-      }
+    frag.appendChild(btn);
+  }
 
-      if (conflictCells.length > 0) {
-        // Popover feedback
-        console.log('hi');
-        const soundBite = document.querySelector(".sound-bite");
-        soundBite.currentTime = 0;
-        soundBite.play();
+  popover.appendChild(frag);
+}
 
-        popover.style.boxShadow = "0 0 10px rgba(255,0,0,0.8)";
-        popover.style.border = "1px solid red";
+function selectGroup(group, subject) {
+  const cells = slotGroups[group];
+  const conflicts = cells.filter(c=>occupied[c] && occupied[c]!==group);
 
-        // Cell highlight
-        conflictCells.forEach(cell => {
-          const el = document.querySelector(`[data-cell="${cell}"]`);
-          if (!el) return;
+  if (conflicts.length) {
+    conflicts.forEach(c=>{
+      const el = cellElements[c];
+      const prev = el.style.background;
+      el.style.background="rgba(255,0,0,0.6)";
+      setTimeout(()=>el.style.background=prev,400);
+    });
+    return;
+  }
 
-          const prev = el.style.background;
-          el.style.background = "rgba(255,0,0,0.6)";
+  selectedGroups[group] = subject || true;
 
-          setTimeout(() => {
-            el.style.background = prev || "";
-          }, 400);
-        });
+  const display = subject || group;
 
-        // Reset popover style
-        setTimeout(() => {
-          popover.style.boxShadow = "0px 0px 5px rgba(0,0,0,0.4)";
-          popover.style.border = "";
-        }, 400);
+  for (const c of cells) {
+    occupied[c]=group;
+    const el = cellElements[c];
 
-        return;
-      }
+    el.classList.add("filled");
+    el.style.background = getColor(group);
+    el.textContent = formatCellText(display);
+    el.title = display;
+  }
 
-      selectedGroups[group] = subject || true;
+  renderMatrix();
+  popover.style.display="none";
+}
 
-      for (const cell of cellsToFill) {
-        occupied[cell] = group;
+function removeGroup(group) {
+  delete selectedGroups[group];
+  delete teacherData[group];
 
-        const el = document.querySelector(`[data-cell="${cell}"]`);
-        if (el) {
-          el.classList.add("filled");
-          el.style.background = getColor(group);
-          const displayText = subject || group;
-          el.innerText = formatCellText(displayText);
-          el.title = displayText;
-        }
-      }
+  for (const c of slotGroups[group]) {
+    delete occupied[c];
+    const el = cellElements[c];
 
-      renderMatrix();
-      popover.style.display = "none";
-    }
+    el.classList.remove("filled");
+    el.style.background="";
+    el.textContent = formatCellText(cellLabels[c]);
+    el.title = cellLabels[c];
+  }
 
-    function removeGroup(group) {
-      delete selectedGroups[group];
-      delete teacherData[group];
+  renderMatrix();
+}
 
-      for (const cell of slotGroups[group]) {
-        delete occupied[cell];
+// ---------- MATRIX ----------
 
-        const el = document.querySelector(`[data-cell="${cell}"]`);
-        if (el) {
-          el.classList.remove("filled");
-          el.style.background = "";
-          el.innerText = formatCellText(cellLabels[cell]);
-          el.title = cellLabels[cell];
-        }
-      }
+function renderMatrix() {
+  const tbody = document.querySelector("#matrix tbody");
+  tbody.innerHTML="";
 
-      renderMatrix();
-      popover.style.display = "none";
-    }
+  for (const g in selectedGroups) {
+    const tr = document.createElement("tr");
 
-    function isSingleLab(group) {
-      return /^L\d+$/.test(group);
-    }
+    const td1 = document.createElement("td");
+    td1.textContent = selectedGroups[g]===true ? g : selectedGroups[g];
 
-    function sortGroups(groups) {
-      return groups.sort((a, b) => {
-        const aIsLab = a.startsWith("L");
-        const bIsLab = b.startsWith("L");
+    const td2 = document.createElement("td");
+    const input = document.createElement("input");
 
-        // theory first
-        if (aIsLab !== bIsLab) return aIsLab ? 1 : -1;
+    input.value = teacherData[g] || "";
+    input.oninput = e => teacherData[g] = e.target.value;
 
-        // LAB sorting
-        if (aIsLab && bIsLab) {
-          const aNum = parseInt(a.match(/\d+/)[0]);
-          const bNum = parseInt(b.match(/\d+/)[0]);
-          return aNum - bNum;
-        }
+    td2.appendChild(input);
 
-        // THEORY sorting
-        const getBase = g => g.split("+")[0];
-        const getLevel = g => g.split("+").length;
+    tr.append(td1, td2);
+    tbody.appendChild(tr);
+  }
+}
 
-        const aBase = getBase(a);
-        const bBase = getBase(b);
+// ---------- INIT CALL ----------
 
-        if (aBase !== bBase) return aBase.localeCompare(bBase);
-
-        return getLevel(a) - getLevel(b);
-      });
-    }
-
-    function renderOptions(options, cellId) {
-      popover.innerHTML = "";
-
-      // ❌ remove single labs
-      let filtered = options.filter(g => !isSingleLab(g));
-
-      // ✅ sort properly
-      filtered = sortGroups(filtered);
-
-      const input = document.createElement("input");
-      input.placeholder = "Subject (optional)";
-      input.style.marginBottom = "8px";
-
-      popover.appendChild(input);
-
-      filtered.forEach(group => {
-        const btn = document.createElement("div");
-        btn.innerText = group;
-        btn.style.padding = "6px";
-        btn.style.cursor = "pointer";
-
-        btn.onclick = () => selectGroup(group, input.value.trim());
-
-        popover.appendChild(btn);
-      });
-    }
-
-    // ---------- MATRIX ----------
-
-    function renderMatrix() {
-      const tbody = document.querySelector("#matrix tbody");
-      tbody.innerHTML = "";
-
-      for (const group in selectedGroups) {
-        const row = document.createElement("tr");
-
-        const subjectCell = document.createElement("td");
-        const subject = selectedGroups[group];
-        subjectCell.innerText = subject === true ? group : subject;
-
-        const teacherCell = document.createElement("td");
-        const input = document.createElement("input");
-
-        input.value = teacherData[group] || "";
-
-        input.oninput = (e) => {
-          teacherData[group] = e.target.value;
-        };
-
-        teacherCell.appendChild(input);
-
-        row.appendChild(subjectCell);
-        row.appendChild(teacherCell);
-
-        tbody.appendChild(row);
-      }
-    }
-
-    // ---------- TOGGLE ----------
-
-    const toggleBtn = document.getElementById("toggleMatrix");
-    const matrixContainer = document.getElementById("matrixContainer");
-
-    toggleBtn.onclick = () => {
-      matrixContainer.style.display =
-        matrixContainer.style.display === "none" ? "block" : "none";
-    };
-
-  </script>
-
-</body>
-
-</html>
+buildGrid();
+init();
+</script>
