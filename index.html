@@ -47,9 +47,18 @@
       border-radius: 5px;
       background: white;
       padding: 8px;
-      max-width: 260px;
+      width: 220px;
+      max-width: 220px;
+      max-height: 300px;
+      overflow-y: auto;
       z-index: 1000;
       box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4);
+    }
+
+    #popover div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     #popover.expanded {
@@ -125,6 +134,16 @@ let cellElements = {};
 let activeCell = null;
 
 const popover = document.getElementById("popover");
+const isMobile = window.innerWidth < 600;
+const isBottomZone = rect.bottom > window.innerHeight * 0.7;
+
+if (isMobile && isBottomZone) {
+  mode = "expanded";
+}
+
+if (rect.right > window.innerWidth * 0.8) {
+  left = rect.right - popW;
+}
 
 const colors = ["#ffb3ba","#baffc9","#bae1ff","#ffffba","#ffdfba","#c9c9ff"];
 
