@@ -27,6 +27,9 @@
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .cell:hover {
@@ -44,8 +47,21 @@
       border-radius: 5px;
       background: white;
       padding: 8px;
+      max-width: 260px;
       z-index: 1000;
       box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4);
+    }
+
+    #popover.expanded {
+      position: fixed;
+      left: 0 !important;
+      right: 0;
+      bottom: 0;
+      top: auto !important;
+      width: 100%;
+      max-height: 50vh;
+      overflow-y: auto;
+      border-radius: 12px 12px 0 0;
     }
 
     #matrixContainer {
@@ -98,7 +114,6 @@
   </div>
 
 <script>
-
 let slotGroups = {};
 let cellToSlotGroups = {};
 let cellToSortedGroups = {};
@@ -107,7 +122,7 @@ let selectedGroups = {};
 let teacherData = {};
 let cellLabels = {};
 let cellElements = {};
-let audio;
+let activeCell = null;
 
 const popover = document.getElementById("popover");
 
@@ -121,7 +136,6 @@ const getColor = g => {
 
 const isAtomic = g => !g.includes('+');
 const isSingleLab = g => /^L\d+$/.test(g);
-
 const formatCellText = t => t.length > 9 ? t.slice(0,9)+"…" : t;
 
 // ---------- COMBINATIONS ----------
@@ -261,8 +275,7 @@ slotGroups = {
               "L60": ["fri_p12"]
 
 
-            }
-
+            };
 
 slotGroups = {
   ...slotGroups,
@@ -270,7 +283,6 @@ slotGroups = {
   ...generateLabCombos(slotGroups)
 };
 
-// reverse map
 for (const g in slotGroups) {
   for (const c of slotGroups[g]) {
     if (!cellToSlotGroups[c]) cellToSlotGroups[c] = new Set();
@@ -278,7 +290,6 @@ for (const g in slotGroups) {
   }
 }
 
-// precompute sorted groups per cell
 function sortGroups(groups) {
   return groups.sort((a,b)=>{
     const aLab = a.startsWith("L");
@@ -286,9 +297,7 @@ function sortGroups(groups) {
 
     if (aLab !== bLab) return aLab ? 1 : -1;
 
-    if (aLab) {
-      return +a.match(/\d+/)[0] - +b.match(/\d+/)[0];
-    }
+    if (aLab) return +a.match(/\d+/)[0] - +b.match(/\d+/)[0];
 
     const aBase = a.split("+")[0];
     const bBase = b.split("+")[0];
@@ -334,10 +343,7 @@ function buildGrid() {
       el.dataset.cell=id;
 
       const label = (cellToSlotGroups[id]||[])
-        ? Array.from(cellToSlotGroups[id])
-          .filter(isAtomic)
-          .sort()
-          .join('/')
+        ? Array.from(cellToSlotGroups[id]).filter(isAtomic).sort().join('/')
         : "";
 
       el.textContent = formatCellText(label);
@@ -366,20 +372,88 @@ function init() {
   });
 
   document.addEventListener("pointerdown", e=>{
-    if (!e.target.closest(".cell") && !e.target.closest("#popover"))
-      popover.style.display="none";
+    if (!e.target.closest(".cell") && !e.target.closest("#popover")) {
+      closePopover();
+    }
   });
 }
 
-function showPopover(cell, id) {
-  const rect = cell.getBoundingClientRect();
+function closePopover() {
+  popover.style.display = "none";
+  popover.classList.remove("expanded");
 
-  popover.style.top = rect.bottom + window.scrollY + "px";
-  popover.style.left = rect.left + window.scrollX + "px";
+  if (activeCell) {
+    activeCell.style.outline = "";
+    activeCell = null;
+  }
+}
+
+// ---------- SMART POSITIONING ----------
+
+function positionPopover(cell) {
+  const margin = 8;
+
+  const rect = cell.getBoundingClientRect();
+  const viewportW = window.innerWidth;
+  const viewportH = window.innerHeight;
+
+  // measure
+  const popW = popover.offsetWidth;
+  const popH = popover.offsetHeight;
+
+  let left = rect.left;
+  let top = rect.bottom;
+
+  // horizontal clamp
+  if (left + popW > viewportW - margin) {
+    left = viewportW - popW - margin;
+  }
+  if (left < margin) left = margin;
+
+  // vertical decision
+  const spaceBelow = viewportH - rect.bottom;
+  const spaceAbove = rect.top;
+
+  let mode = "popover";
+
+  if (popH > spaceBelow && popH > spaceAbove) {
+    mode = "expanded";
+  } else if (spaceBelow >= popH) {
+    top = rect.bottom;
+  } else {
+    top = rect.top - popH;
+  }
+
+  return { left, top, mode };
+}
+
+// ---------- POPOVER ----------
+
+function showPopover(cell, id) {
+  closePopover();
+
+  activeCell = cell;
+  cell.style.outline = "2px solid black";
+
   popover.style.display = "block";
+  popover.classList.remove("expanded");
 
   renderOptions(id);
+
+  // measure AFTER render
+  requestAnimationFrame(()=>{
+    const { left, top, mode } = positionPopover(cell);
+
+    if (mode === "expanded") {
+      popover.classList.add("expanded");
+    } else {
+      popover.style.left = left + "px";
+      popover.style.top = top + "px";
+    }
+  });
 }
+
+// ---------- OPTIONS ----------
 
 function getConflictCount(group) {
   let count = 0;
@@ -401,6 +475,7 @@ function renderOptions(cellId) {
 
   for (const g of cellToSortedGroups[cellId] || []) {
     const btn = document.createElement("div");
+
     btn.textContent = g.replaceAll("+"," + ");
     btn.style.padding = "6px";
     btn.style.cursor = "pointer";
@@ -421,6 +496,8 @@ function renderOptions(cellId) {
 
   popover.appendChild(frag);
 }
+
+// ---------- SELECT ----------
 
 function selectGroup(group, subject) {
   const cells = slotGroups[group];
@@ -451,8 +528,10 @@ function selectGroup(group, subject) {
   }
 
   renderMatrix();
-  popover.style.display="none";
+  closePopover();
 }
+
+// ---------- REMOVE ----------
 
 function removeGroup(group) {
   delete selectedGroups[group];
@@ -496,7 +575,7 @@ function renderMatrix() {
   }
 }
 
-// ---------- INIT CALL ----------
+// ---------- INIT ----------
 
 buildGrid();
 init();
