@@ -3,12 +3,13 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>VIT FFCS Planner - Fast Timetable Builder for VIT Students</title>
+  <title>VIT FFCS Planner (2026/2027/2028/2029) - Build Timetable Instantly | No Login</title>
 
   <meta name="google-site-verification" content="jzOZmh26huxwERt7PVY54Uy-NXI8SCBiO41QuqQjELo" />
 
   <meta property="og:title" content="VIT FFCS Planner">
-  <meta property="og:description" content="Fastest way to test FFCS slot combinations">
+  <meta property="og:description" content="Instantly build your VIT timetable. No login, no lag. Test slot combinations in seconds.">
+  <meta name="keywords" content="VIT FFCS Planner, VIT timetable planner, FFCS slot planner, VIT slot combinations">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://vit-ffcs-planner.pages.dev/og.png">
   <meta property="og:url" content="https://vit-ffcs-planner.pages.dev">
@@ -34,6 +35,11 @@ html {
   html {
     font-size: 13px;
   }
+}
+
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 body {
@@ -259,7 +265,7 @@ input {
   <div id="app" style="width: 100%; text-align: center;">
 
     <div id="header">
-      <h1>FFCS Planner</h1>
+      <h1>VIT FFCS Planner</h1>
       <p>Build your VIT timetable in seconds</p>
       <p style="font-size:14px; opacity:0.7;">Tap a cell → choose slot → tap again to remove</p>
     </div>
@@ -283,6 +289,59 @@ input {
 
   </div>
 
+
+<details style="max-width:700px;margin:40px auto;color:#94A3B8;">
+  <summary style="cursor:pointer;color:#E2E8F0;font-weight:600;">
+    About this VIT FFCS Planner
+  </summary>
+
+  <div id="seo-content" style="max-width: 700px; margin: 40px auto; text-align: left; line-height: 1.6; color: #94A3B8;">
+
+    <h2 style="color: #E2E8F0;">What is this VIT FFCS Planner?</h2>
+    <p>
+      This is a fast, no-login VIT FFCS planner built to help students test slot combinations instantly.
+      Instead of going through multiple tabs or slow planners, you can directly click on slots and build your timetable in seconds.
+    </p>
+
+    <h2 style="color: #E2E8F0;">How to use the FFCS Planner</h2>
+    <ul>
+      <li>Tap any cell in the timetable</li>
+      <li>Select a slot combination</li>
+      <li>Add subject names if needed</li>
+      <li>Avoid clashes automatically</li>
+    </ul>
+
+    <p>
+      You can quickly experiment with different FFCS slot combinations and finalize your timetable without confusion.
+    </p>
+
+    <h2 style="color: #E2E8F0;">Why this planner is faster</h2>
+    <ul>
+      <li>No login or account required</li>
+      <li>Instant slot selection with visual feedback</li>
+      <li>Built specifically for VIT FFCS structure</li>
+      <li>Works smoothly on mobile and desktop</li>
+    </ul>
+
+    <h2 style="color: #E2E8F0;">Who is this for?</h2>
+    <p>
+      This FFCS planner is designed for VIT students who want a quick and simple way to build their timetable during course registration.
+      It is especially useful when testing multiple slot combinations under time pressure.
+    </p>
+
+    <h2 style="color: #E2E8F0;">Common searches this tool helps with</h2>
+    <p>
+      VIT FFCS planner, VIT timetable planner, FFCS slot combinations, VIT slot planner, FFCS timetable builder.
+    </p>
+
+  </div>
+
+</details>
+
+
+
+
+
   <script>
     let slotGroups = {};
     let cellToSlotGroups = {};
@@ -301,10 +360,35 @@ input {
     // ---------- UTIL ----------
 
     const colors = [
-  "#FF6B6B", "#4DA3FF", "#2DD4BF", "#FACC15", "#A78BFA", "#FB923C", // Original
-  "#F472B6", "#818CF8", "#22D3EE", "#4ADE80", "#C084FC", "#FB7185", // New (Set 1)
-  "#38BDF8", "#A3E635", "#F97316", "#6366F1", "#10B981", "#E879F9"  // New (Set 2)
-];
+                    "#E57373", // muted red
+                    "#64B5F6", // blue
+                    "#4DB6AC", // teal
+                    "#FFD54F", // soft yellow
+                    "#9575CD", // purple
+                    "#FF8A65", // orange
+
+                    "#F06292", // pink
+                    "#7986CB", // indigo
+                    "#4FC3F7", // sky blue
+                    "#81C784", // green
+                    "#BA68C8", // violet
+                    "#FFB74D", // amber
+
+                    "#AED581", // light green
+                    "#4DD0E1", // cyan
+                    "#A1887F", // brown (important contrast break)
+                    "#90A4AE", // blue grey (neutral slot)
+                    "#DCE775", // lime
+                    "#FFAB91", // soft coral
+
+                    "#CE93D8", // light purple
+                    "#80CBC4", // soft teal
+                    "#B0BEC5", // grey-blue neutral
+                    "#FFCC80", // pale orange
+                    "#9FA8DA", // desaturated indigo
+                    "#A5D6A7"  // soft green
+                  ];
+
 
     // ---------- TIME STRIP DATA ----------
 
