@@ -833,6 +833,18 @@ input {
       popover.appendChild(frag);
     }
 
+    // ---------- SOUND ----------
+
+    let soundBite;
+
+    function playSound() {
+      if (!soundBite) {
+        soundBite = new Audio("faa.mp3"); // loads only now
+      }
+
+      soundBite.currentTime = 0;
+      soundBite.play();
+    }
     // ---------- SELECT ----------
 
     function selectGroup(group, subject) {
@@ -840,6 +852,8 @@ input {
       const conflicts = cells.filter(c => occupied[c] && occupied[c] !== group);
 
       if (conflicts.length) {
+        console.log("Conflicts:", conflicts);
+        playSound();
         conflicts.forEach(c => {
           const el = cellElements[c];
           const prev = el.style.background;
