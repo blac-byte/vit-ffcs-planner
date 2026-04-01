@@ -500,35 +500,73 @@ input {
 
     // ---------- INTERACTION ----------
 
+    let pointerStart = null;
+
     function init() {
       document.querySelectorAll(".cell").forEach(cell => {
+
+        // capture intent
         cell.addEventListener("pointerdown", (e) => {
+          pointerStart = {
+            x: e.clientX,
+            y: e.clientY,
+            cell: cell
+          };
+        });
+
+        // commit action on release
+        cell.addEventListener("pointerup", (e) => {
           e.stopPropagation();
 
+          if (!pointerStart) return;
+
+          const dx = Math.abs(e.clientX - pointerStart.x);
+          const dy = Math.abs(e.clientY - pointerStart.y);
+
+          // ignore scroll
+          if (dx > 8 || dy > 8) {
+            pointerStart = null;
+            return;
+          }
+
+          const cell = pointerStart.cell;
           const id = cell.dataset.cell;
           const group = occupied[id];
 
-          // delete
+          const isSameCell = activeCell === cell;
+          const isOpen = popover.style.display === "block";
+
+          // ✅ 1. toggle popover (same cell)
+          if (isSameCell && isOpen) {
+            closePopover();
+            pointerStart = null;
+            return;
+          }
+
+          // ✅ 2. delete existing selection
           if (group) {
             removeGroup(group);
+            pointerStart = null;
             return;
           }
 
-          // toggle popover
-          if (activeCell === cell && popover.style.display === "block") {
-            closePopover();
-            return;
-          }
-
+          // ✅ 3. open popover (on release)
           showPopover(cell, id);
+
+          pointerStart = null;
         });
+
       });
 
-      // close popover
+      // close popover when tapping outside
       document.addEventListener("pointerdown", (e) => {
-        if (!e.target.closest("#popover")) {
-          closePopover();
-        }
+        // if tapping popover → ignore
+        if (e.target.closest("#popover")) return;
+
+        // if tapping the active cell → ignore (important)
+        if (activeCell && e.target.closest(".cell") === activeCell) return;
+
+        closePopover();
       });
     }
 
