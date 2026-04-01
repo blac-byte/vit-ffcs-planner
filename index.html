@@ -3,601 +3,759 @@
 
 <head>
   <meta name="google-site-verification" content="jzOZmh26huxwERt7PVY54Uy-NXI8SCBiO41QuqQjELo" />
+  <meta property="og:title" content="VIT FFCS Planner">
+  <meta property="og:description" content="Fastest way to test FFCS slot combinations">
+  <meta property="og:type" content="website">
   <meta charset="UTF-8">
-  <title>FFCS Planner</title>
+  <title>VIT FFCS Planner - Fast Timetable Builder for VIT Students</title>
+  <meta name="description"
+    content="Quickly test and build VIT FFCS timetables. No login, no recommendations. Fast scratchpad for slot combinations.">
 
   <style>
-    #grid {
-      display: grid;
-      grid-template-columns: 80px repeat(12, 80px);
-      gap: 2px;
-    }
+  body {
+  background: #020617;
+  color: #E2E8F0;
+  font-family: system-ui;
+  margin: 0;
+  padding: 12px 16px;
+}
 
-    .cell {
-      border: 1px solid black;
-      background-color: rgb(220, 220, 220);
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
-      font-size: 12px;
-      text-align: center;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+/* ---------- HEADER ---------- */
 
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
+#app {
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
-    .cell:hover {
-      background-color: #fffbfb;
-      transition: background-color 0.3s;
-    }
+#header {
+  text-align: left;
+  margin-bottom: 12px;
+}
 
-    .filled {
-      font-weight: bold;
-    }
+h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
 
-    #popover {
-      position: absolute;
-      display: none;
-      border-radius: 5px;
-      background: white;
-      padding: 8px;
-      width: 220px;
-      max-width: 220px;
-      max-height: 300px;
-      overflow-y: auto;
-      z-index: 1000;
-      box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4);
-    }
+p {
+  margin: 2px 0;
+  font-size: 12px;
+  color: #64748B;
+}
 
-    #popover div {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+/* ---------- GRID ---------- */
 
-    #popover.expanded {
-      position: fixed;
-      left: 0 !important;
-      right: 0;
-      bottom: 0;
-      top: auto !important;
-      width: 100%;
-      max-height: 50vh;
-      overflow-y: auto;
-      border-radius: 12px 12px 0 0;
-    }
+#grid {
+  display: grid;
+  grid-template-columns: 70px repeat(12, minmax(70px, 1fr));
+  gap: 2px;
+  background: #0f172a;
+  padding: 2px;
+  border-radius: 6px;
+}
 
-    #matrixContainer {
-      margin-top: 12px;
-    }
+/* day + header cells */
+#grid > div:first-child,
+#grid > div:nth-child(-n+13) {
+  font-size: 11px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 500px;
-    }
+/* ---------- CELLS ---------- */
 
-    td,
-    th {
-      border: 1px solid #ccc;
-      padding: 6px;
-      font-size: 13px;
-    }
+.cell {
+  background: #020617;
+  border: 1px solid #1e293b;
+  height: 64px;
 
-    input {
-      width: 100%;
-      box-sizing: border-box;
-    }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+  color: #94A3B8;
+
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.cell:hover {
+  background: #0f172a;
+}
+
+.cell:active {
+  transform: scale(0.97);
+}
+
+/* selected */
+.filled {
+  color: white;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+}
+
+/* ---------- POPOVER ---------- */
+
+#popover {
+  position: absolute;
+  display: none;
+
+  background: #020617;
+  border: 1px solid #94A3B8;
+
+  border-radius: 8px;
+  padding: 10px;
+
+  width: 200px;
+  max-height: 280px;
+  overflow-y: auto;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  z-index: 1000;
+}
+
+#popover div {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #cbd5f5;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#popover div:hover {
+  background: #0f172a;
+}
+
+/* input */
+#popover input {
+  width: 100%;
+  box-sizing: border-box; /* Add this */
+  
+  margin-bottom: 8px;
+  padding: 6px;
+  background: #020617;
+  color: #E2E8F0;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+}
+
+
+/* mobile sheet */
+#popover.expanded {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+
+  border-radius: 12px 12px 0 0;
+  max-height: 50vh;
+}
+
+/* ---------- MATRIX ---------- */
+
+#toggleMatrix {
+  margin-top: 12px;
+  background: #1e293b;
+  color: #E2E8F0;
+  border: 1px solid #334155;
+
+  padding: 6px 14px;
+  border-radius: 999px;
+
+  cursor: pointer;
+}
+
+#toggleMatrix:hover {
+  background: #334155;
+}
+
+#matrixContainer {
+  margin-top: 10px;
+}
+
+table {
+  width: 100%;
+  max-width: 420px;
+
+  border-collapse: collapse;
+  background: #020617;
+  border: 1px solid #1e293b;
+}
+
+th {
+  font-size: 11px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+td, th {
+  padding: 6px;
+  border-bottom: 1px solid #1e293b;
+}
+
+input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #E2E8F0;
+  font-size: 12px;
+  outline: none;
+}
   </style>
 </head>
 
 <body>
+  <div id="app" style="width: 100%; text-align: center;">
 
-  <div id="popover"></div>
-  <div id="grid"></div>
+    <div id="header">
+      <h1>FFCS Planner</h1>
+      <p>Build your VIT timetable in seconds</p>
+      <p style="font-size:12px; opacity:0.7;">Tap a cell → choose slot → tap again to remove</p>
+    </div>
 
-  <button id="toggleMatrix" style="border: none; 
-                                   background-color: rgb(63, 76, 255); 
-                                   color: white; 
-                                   padding: 6px 16px; 
-                                   border-radius: 30px; 
-                                   margin-top: 10px;">Toggle Subjects
-  </button>
+    <div id="popover"></div>
+    <div id="grid"></div>
 
-  <div id="matrixContainer">
-    <table id="matrix">
-      <thead>
-        <tr>
-          <th>Subject</th>
-          <th>Teacher</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <button id="toggleMatrix">Toggle Subjects</button>
+
+    <div id="matrixContainer">
+      <table id="matrix">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Teacher</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
   </div>
 
-<script>
-let slotGroups = {};
-let cellToSlotGroups = {};
-let cellToSortedGroups = {};
-let occupied = {};
-let selectedGroups = {};
-let teacherData = {};
-let cellLabels = {};
-let cellElements = {};
-let activeCell = null;
+  <script>
+    let slotGroups = {};
+    let cellToSlotGroups = {};
+    let cellToSortedGroups = {};
+    let occupied = {};
+    let selectedGroups = {};
+    let selectedGroupsColors = {};
+    let teacherData = {};
+    let cellLabels = {};
+    let cellElements = {};
+    let activeCell = null;
+    let colorIndex = 0;
 
-const popover = document.getElementById("popover");
+    const popover = document.getElementById("popover");
 
-// ---------- UTIL ----------
+    // ---------- UTIL ----------
 
-const colors = ["#ffb3ba","#baffc9","#bae1ff","#ffffba","#ffdfba","#c9c9ff"];
-
-const getColor = g => {
-  let h = 0;
-  for (let i = 0; i < g.length; i++) h += g.charCodeAt(i);
-  return colors[h % colors.length];
-};
-
-const isAtomic = g => !g.includes('+');
-const isSingleLab = g => /^L\d+$/.test(g);
-const formatCellText = t => t.length > 9 ? t.slice(0,9)+"…" : t;
-
-// ---------- COMBINATIONS ----------
-
-function generateTheoryCombos(data) {
-  const out = {};
-  for (const g in data) {
-    const m = g.match(/^([A-Z]+)(\d)$/);
-    if (!m) continue;
-
-    const [_, p, n] = m;
-    const base = `${p}${n}`;
-    const ta = `T${p}${n}`;
-    const taa = `T${p}${p}${n}`;
-
-    if (data[base] && data[ta])
-      out[`${base}+${ta}`] = [...data[base], ...data[ta]];
-
-    if (data[base] && data[ta] && data[taa])
-      out[`${base}+${ta}+${taa}`] = [...data[base], ...data[ta], ...data[taa]];
-  }
-  return out;
-}
-
-function generateLabCombos(data) {
-  const out = {};
-  for (const g in data) {
-    const m = g.match(/^L(\d+)$/);
-    if (!m) continue;
-
-    const n = +m[1];
-    const pair = n % 2 ? [`L${n}`,`L${n+1}`] : [`L${n-1}`,`L${n}`];
-
-    if (data[pair[0]] && data[pair[1]])
-      out[`${pair[0]}+${pair[1]}`] = [...data[pair[0]], ...data[pair[1]]];
-  }
-  return out;
-}
-
-// ---------- INIT DATA ----------
-
-slotGroups = {
-  "A1": ["mon_p1", "wed_p2"],
-  "A2": ["mon_p7", "wed_p8"],
-  "B1": ["tue_p1", "thu_p2"],
-  "B2": ["tue_p7", "thu_p8"],
-  "C1": ["wed_p1", "fri_p2"],
-  "C2": ["wed_p7", "fri_p8"],
-  "D1": ["thu_p1", "mon_p3"],
-  "D2": ["thu_p7", "mon_p9"],
-  "E1": ["fri_p1", "tue_p3"],
-  "E2": ["fri_p7", "tue_p9"],
-  "F1": ["mon_p2", "wed_p3"],
-  "F2": ["mon_p8", "wed_p9"],
-  "G1": ["tue_p2", "thu_p3"],
-  "G2": ["tue_p8", "thu_p9"],
-  "TA1": ["fri_p3"],
-  "TA2": ["fri_p9"],
-  "TB1": ["mon_p4"],
-  "TB2": ["mon_p10"],
-  "TC1": ["tue_p4"],
-  "TC2": ["tue_p10"],
-  "TD1": ["wed_p4"],
-  "X": ["wed_p5"],
-  "Y": ["wed_p6"],
-  "TD2": ["wed_p10"],
-  "TE1": ["thu_p4"],
-  "TE2": ["thu_p10"],
-  "TF1": ["fri_p4"],
-  "TF2": ["fri_p10"],
-  "TG1": ["mon_p5"],
-  "TG2": ["mon_p11"],
-  "TAA1": ["tue_p5"],
-  "TAA2": ["tue_p11"],
-  "TBB2": ["wed_p11"],
-  "TCC1": ["thu_p5"],
-  "TCC2": ["thu_p11"],
-  "TDD1": ["fri_p5"],
-  "TDD2": ["fri_p11"],
-  "L1": ["mon_p1"],
-  "L2": ["mon_p2"],
-  "L3": ["mon_p3"],
-  "L4": ["mon_p4"],
-  "L5": ["mon_p5"],
-  "L6": ["mon_p6"],
-  "L7": ["tue_p1"],
-  "L8": ["tue_p2"],
-  "L9": ["tue_p3"],
-  "L10": ["tue_p4"],
-  "L11": ["tue_p5"],
-  "L12": ["tue_p6"],
-  "L13": ["wed_p1"],
-  "L14": ["wed_p2"],
-  "L15": ["wed_p3"],
-  "L16": ["wed_p4"],
-  "L19": ["thu_p1"],
-  "L20": ["thu_p2"],
-  "L21": ["thu_p3"],
-  "L22": ["thu_p4"],
-  "L23": ["thu_p5"],
-  "L24": ["thu_p6"],
-  "L25": ["fri_p1"],
-  "L26": ["fri_p2"],
-  "L27": ["fri_p3"],
-  "L28": ["fri_p4"],
-  "L29": ["fri_p5"],
-  "L30": ["fri_p6"],
-  "L31": ["mon_p7"],
-  "L32": ["mon_p8"],
-  "L33": ["mon_p9"],
-  "L34": ["mon_p10"],
-  "L35": ["mon_p11"],
-  "L36": ["mon_p12"],
-  "L37": ["tue_p7"],
-  "L38": ["tue_p8"],
-  "L39": ["tue_p9"],
-  "L40": ["tue_p10"],
-  "L41": ["tue_p11"],
-  "L42": ["tue_p12"],
-  "L43": ["wed_p7"],
-  "L44": ["wed_p8"],
-  "L45": ["wed_p9"],
-  "L46": ["wed_p10"],
-  "L47": ["wed_p11"],
-  "L48": ["wed_p12"],
-  "L49": ["thu_p7"],
-  "L50": ["thu_p8"],
-  "L51": ["thu_p9"],
-  "L52": ["thu_p10"],
-  "L53": ["thu_p11"],
-  "L54": ["thu_p12"],
-  "L55": ["fri_p7"],
-  "L56": ["fri_p8"],
-  "L57": ["fri_p9"],
-  "L58": ["fri_p10"],
-  "L59": ["fri_p11"],
-  "L60": ["fri_p12"]
+    const colors = [
+  "#FF6B6B", "#4DA3FF", "#2DD4BF", "#FACC15", "#A78BFA", "#FB923C", // Original
+  "#F472B6", "#818CF8", "#22D3EE", "#4ADE80", "#C084FC", "#FB7185", // New (Set 1)
+  "#38BDF8", "#A3E635", "#F97316", "#6366F1", "#10B981", "#E879F9"  // New (Set 2)
+];
 
 
-}
+    const getColor = g => {
+      let h = 0;
+      for (let i = 0; i < g.length; i++) h += g.charCodeAt(i);
+      return colors[h % colors.length];
+    };
+
+    const getNextColor = () => {
+      const color = colors[colorIndex % colors.length];
+      colorIndex++;
+      return color;
+    };
+
+    const isAtomic = g => !g.includes('+');
+    const isSingleLab = g => /^L\d+$/.test(g);
+    const formatCellText = t => t.length > 9 ? t.slice(0, 9) + "…" : t;
+
+    // ---------- COMBINATIONS ----------
+
+    function generateTheoryCombos(data) {
+      const out = {};
+      for (const g in data) {
+        const m = g.match(/^([A-Z]+)(\d)$/);
+        if (!m) continue;
+
+        const [_, p, n] = m;
+        const base = `${p}${n}`;
+        const ta = `T${p}${n}`;
+        const taa = `T${p}${p}${n}`;
+
+        if (data[base] && data[ta])
+          out[`${base}+${ta}`] = [...data[base], ...data[ta]];
+
+        if (data[base] && data[ta] && data[taa])
+          out[`${base}+${ta}+${taa}`] = [...data[base], ...data[ta], ...data[taa]];
+      }
+      return out;
+    }
+
+    function generateLabCombos(data) {
+      const out = {};
+      for (const g in data) {
+        const m = g.match(/^L(\d+)$/);
+        if (!m) continue;
+
+        const n = +m[1];
+        const pair = n % 2 ? [`L${n}`, `L${n + 1}`] : [`L${n - 1}`, `L${n}`];
+
+        if (data[pair[0]] && data[pair[1]])
+          out[`${pair[0]}+${pair[1]}`] = [...data[pair[0]], ...data[pair[1]]];
+      }
+      return out;
+    }
+
+    // ---------- INIT DATA ----------
+
+    slotGroups = {
+      "A1": ["mon_p1", "wed_p2"],
+      "A2": ["mon_p7", "wed_p8"],
+      "B1": ["tue_p1", "thu_p2"],
+      "B2": ["tue_p7", "thu_p8"],
+      "C1": ["wed_p1", "fri_p2"],
+      "C2": ["wed_p7", "fri_p8"],
+      "D1": ["thu_p1", "mon_p3"],
+      "D2": ["thu_p7", "mon_p9"],
+      "E1": ["fri_p1", "tue_p3"],
+      "E2": ["fri_p7", "tue_p9"],
+      "F1": ["mon_p2", "wed_p3"],
+      "F2": ["mon_p8", "wed_p9"],
+      "G1": ["tue_p2", "thu_p3"],
+      "G2": ["tue_p8", "thu_p9"],
+      "TA1": ["fri_p3"],
+      "TA2": ["fri_p9"],
+      "TB1": ["mon_p4"],
+      "TB2": ["mon_p10"],
+      "TC1": ["tue_p4"],
+      "TC2": ["tue_p10"],
+      "TD1": ["wed_p4"],
+      "X": ["wed_p5"],
+      "Y": ["wed_p6"],
+      "TD2": ["wed_p10"],
+      "TE1": ["thu_p4"],
+      "TE2": ["thu_p10"],
+      "TF1": ["fri_p4"],
+      "TF2": ["fri_p10"],
+      "TG1": ["mon_p5"],
+      "TG2": ["mon_p11"],
+      "TAA1": ["tue_p5"],
+      "TAA2": ["tue_p11"],
+      "TBB2": ["wed_p11"],
+      "TCC1": ["thu_p5"],
+      "TCC2": ["thu_p11"],
+      "TDD1": ["fri_p5"],
+      "TDD2": ["fri_p11"],
+      "L1": ["mon_p1"],
+      "L2": ["mon_p2"],
+      "L3": ["mon_p3"],
+      "L4": ["mon_p4"],
+      "L5": ["mon_p5"],
+      "L6": ["mon_p6"],
+      "L7": ["tue_p1"],
+      "L8": ["tue_p2"],
+      "L9": ["tue_p3"],
+      "L10": ["tue_p4"],
+      "L11": ["tue_p5"],
+      "L12": ["tue_p6"],
+      "L13": ["wed_p1"],
+      "L14": ["wed_p2"],
+      "L15": ["wed_p3"],
+      "L16": ["wed_p4"],
+      "L19": ["thu_p1"],
+      "L20": ["thu_p2"],
+      "L21": ["thu_p3"],
+      "L22": ["thu_p4"],
+      "L23": ["thu_p5"],
+      "L24": ["thu_p6"],
+      "L25": ["fri_p1"],
+      "L26": ["fri_p2"],
+      "L27": ["fri_p3"],
+      "L28": ["fri_p4"],
+      "L29": ["fri_p5"],
+      "L30": ["fri_p6"],
+      "L31": ["mon_p7"],
+      "L32": ["mon_p8"],
+      "L33": ["mon_p9"],
+      "L34": ["mon_p10"],
+      "L35": ["mon_p11"],
+      "L36": ["mon_p12"],
+      "L37": ["tue_p7"],
+      "L38": ["tue_p8"],
+      "L39": ["tue_p9"],
+      "L40": ["tue_p10"],
+      "L41": ["tue_p11"],
+      "L42": ["tue_p12"],
+      "L43": ["wed_p7"],
+      "L44": ["wed_p8"],
+      "L45": ["wed_p9"],
+      "L46": ["wed_p10"],
+      "L47": ["wed_p11"],
+      "L48": ["wed_p12"],
+      "L49": ["thu_p7"],
+      "L50": ["thu_p8"],
+      "L51": ["thu_p9"],
+      "L52": ["thu_p10"],
+      "L53": ["thu_p11"],
+      "L54": ["thu_p12"],
+      "L55": ["fri_p7"],
+      "L56": ["fri_p8"],
+      "L57": ["fri_p9"],
+      "L58": ["fri_p10"],
+      "L59": ["fri_p11"],
+      "L60": ["fri_p12"],
+    }
 
 
-slotGroups = {
-  ...slotGroups,
-  ...generateTheoryCombos(slotGroups),
-  ...generateLabCombos(slotGroups)
-};
+    slotGroups = {
+      ...slotGroups,
+      ...generateTheoryCombos(slotGroups),
+      ...generateLabCombos(slotGroups)
+    };
 
-for (const g in slotGroups) {
-  for (const c of slotGroups[g]) {
-    if (!cellToSlotGroups[c]) cellToSlotGroups[c] = new Set();
-    cellToSlotGroups[c].add(g);
-  }
-}
+    for (const g in slotGroups) {
+      for (const c of slotGroups[g]) {
+        if (!cellToSlotGroups[c]) cellToSlotGroups[c] = new Set();
+        cellToSlotGroups[c].add(g);
+      }
+    }
 
-// ---------- SORT ----------
+    // ---------- SORT ----------
 
-function sortGroups(groups) {
-  return groups.sort((a,b)=>{
-    const aLab = a.startsWith("L");
-    const bLab = b.startsWith("L");
+    function sortGroups(groups) {
+      return groups.sort((a, b) => {
+        const aLab = a.startsWith("L");
+        const bLab = b.startsWith("L");
 
-    if (aLab !== bLab) return aLab ? 1 : -1;
+        if (aLab !== bLab) return aLab ? 1 : -1;
 
-    if (aLab) return +a.match(/\d+/)[0] - +b.match(/\d+/)[0];
+        if (aLab) return +a.match(/\d+/)[0] - +b.match(/\d+/)[0];
 
-    const aBase = a.split("+")[0];
-    const bBase = b.split("+")[0];
+        const aBase = a.split("+")[0];
+        const bBase = b.split("+")[0];
 
-    if (aBase !== bBase) return aBase.localeCompare(bBase);
+        if (aBase !== bBase) return aBase.localeCompare(bBase);
 
-    return a.split("+").length - b.split("+").length;
-  });
-}
+        return a.split("+").length - b.split("+").length;
+      });
+    }
 
-for (const c in cellToSlotGroups) {
-  let arr = Array.from(cellToSlotGroups[c]).filter(g=>!isSingleLab(g));
-  cellToSortedGroups[c] = sortGroups(arr);
-}
+    for (const c in cellToSlotGroups) {
+      let arr = Array.from(cellToSlotGroups[c]).filter(g => !isSingleLab(g));
+      cellToSortedGroups[c] = sortGroups(arr);
+    }
 
-// ---------- GRID ----------
+    // ---------- GRID ----------
 
-function buildGrid() {
-  const days = ["mon","tue","wed","thu","fri"];
-  const periods = Array.from({length:12},(_,i)=>i+1);
-  const grid = document.getElementById("grid");
+    function buildGrid() {
+      const days = ["mon", "tue", "wed", "thu", "fri"];
+      const periods = Array.from({ length: 12 }, (_, i) => i + 1);
+      const grid = document.getElementById("grid");
 
-  grid.appendChild(document.createElement("div"));
+      grid.appendChild(document.createElement("div"));
 
-  periods.forEach(p=>{
-    const el = document.createElement("div");
-    el.textContent = "P"+p;
-    el.style.fontWeight="bold";
-    grid.appendChild(el);
-  });
+      periods.forEach(p => {
+        const el = document.createElement("div");
+        el.textContent = "P" + p;
+        el.style.fontWeight = "bold";
+        grid.appendChild(el);
+      });
 
-  days.forEach(d=>{
-    const day = document.createElement("div");
-    day.textContent = d.toUpperCase();
-    day.style.fontWeight="bold";
-    grid.appendChild(day);
+      days.forEach(d => {
+        const day = document.createElement("div");
+        day.textContent = d.toUpperCase();
+        day.style.fontWeight = "bold";
+        grid.appendChild(day);
 
-    periods.forEach(p=>{
-      const id = `${d}_p${p}`;
-      const el = document.createElement("div");
+        periods.forEach(p => {
+          const id = `${d}_p${p}`;
+          const el = document.createElement("div");
 
-      el.className="cell";
-      el.dataset.cell=id;
+          el.className = "cell";
+          el.dataset.cell = id;
 
-      const label = (cellToSlotGroups[id]||[])
-        ? Array.from(cellToSlotGroups[id]).filter(isAtomic).sort().join('/')
-        : "";
+          const label = (cellToSlotGroups[id] || [])
+            ? Array.from(cellToSlotGroups[id]).filter(isAtomic).sort().join('/')
+            : "";
 
-      el.textContent = formatCellText(label);
-      el.title = label;
+          el.textContent = formatCellText(label);
+          el.title = label;
 
-      cellLabels[id] = label;
-      cellElements[id] = el;
+          cellLabels[id] = label;
+          cellElements[id] = el;
 
-      grid.appendChild(el);
-    });
-  });
-}
+          grid.appendChild(el);
+        });
+      });
+    }
 
-// ---------- INTERACTION ----------
+    // ---------- INTERACTION ----------
 
-function init() {
-  document.querySelectorAll(".cell").forEach(cell=>{
-    cell.addEventListener("pointerdown", ()=>{
-      const id = cell.dataset.cell;
-      const group = occupied[id];
+    function init() {
+      document.querySelectorAll(".cell").forEach(cell => {
+        cell.addEventListener("click", () => {
+          const id = cell.dataset.cell;
+          const group = occupied[id];
 
-      if (group) return removeGroup(group);
+          // If cell has a selection, delete it
+          if (group) {
+            removeGroup(group);
+          }
+          // If popover is open for this cell, close it
+          else if (activeCell === cell && popover.style.display === "block") {
+            closePopover();
+          }
+          // Otherwise, open popover
+          else {
+            showPopover(cell, id);
+          }
+        });
+      });
 
-      showPopover(cell, id);
-    });
-  });
+      document.addEventListener("click", e => {
+        if (!e.target.closest(".cell") && !e.target.closest("#popover")) {
+          closePopover();
+        }
+      });
+    }
 
-  document.addEventListener("pointerdown", e=>{
-    if (!e.target.closest(".cell") && !e.target.closest("#popover")) {
+    function closePopover() {
+      popover.style.display = "none";
+      popover.classList.remove("expanded");
+
+      if (activeCell) {
+        activeCell.style.outline = "";
+        activeCell = null;
+      }
+    }
+
+    // ---------- POSITIONING (FIXED) ----------
+
+    function positionPopover(cell) {
+      const margin = 8;
+
+      const rect = cell.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      const popW = popover.offsetWidth;
+      const popH = popover.offsetHeight;
+
+      let left = rect.left;
+      let top = rect.bottom;
+
+      // horizontal bias (right edge fix)
+      if (rect.right > vw * 0.8) {
+        left = rect.right - popW;
+      }
+
+      // clamp
+      if (left + popW > vw - margin) {
+        left = vw - popW - margin;
+      }
+      if (left < margin) left = margin;
+
+      // deterministic vertical logic
+      const isMobile = vw < 600;
+      const isBottomZone = rect.bottom > vh * 0.7;
+
+      let mode = "popover";
+
+      if (isMobile && isBottomZone) {
+        mode = "expanded";
+      } else {
+        const spaceBelow = vh - rect.bottom;
+
+        if (spaceBelow >= popH) {
+          top = rect.bottom;
+        } else {
+          top = rect.top - popH;
+        }
+      }
+
+      return { left, top, mode };
+    }
+
+    // ---------- POPOVER ----------
+
+    function showPopover(cell, id) {
+      closePopover();
+
+      activeCell = cell;
+      cell.style.outline = "2px solid black";
+
+      popover.style.display = "block";
+      popover.classList.remove("expanded");
+
+      renderOptions(id);
+
+      requestAnimationFrame(() => {
+        const { left, top, mode } = positionPopover(cell);
+
+        if (mode === "expanded") {
+          popover.classList.add("expanded");
+        } else {
+          popover.style.left = left + "px";
+          popover.style.top = top + "px";
+        }
+      });
+    }
+
+    // ---------- OPTIONS ----------
+
+    function getConflictCount(group) {
+      let count = 0;
+      for (const c of slotGroups[group]) {
+        if (occupied[c] && occupied[c] !== group) count++;
+      }
+      return count;
+    }
+
+    function renderOptions(cellId) {
+      popover.innerHTML = "";
+
+      const frag = document.createDocumentFragment();
+
+      const input = document.createElement("input");
+      input.placeholder = "Subject (optional)";
+      input.style.marginBottom = "8px";
+      frag.appendChild(input);
+
+      for (const g of cellToSortedGroups[cellId] || []) {
+        const btn = document.createElement("div");
+
+        btn.textContent = g.replaceAll("+", " + ");
+        btn.style.padding = "6px";
+        btn.style.cursor = "pointer";
+
+        const conflicts = getConflictCount(g);
+        if (conflicts > 0) {
+          btn.style.opacity = "0.5";
+          btn.style.color = "red";
+          btn.textContent += ` (${conflicts})`;
+        }
+
+        btn.addEventListener("pointerdown", () => {
+          selectGroup(g, input.value.trim());
+        });
+
+        frag.appendChild(btn);
+      }
+
+      popover.appendChild(frag);
+    }
+
+    // ---------- SELECT ----------
+
+    function selectGroup(group, subject) {
+      const cells = slotGroups[group];
+      const conflicts = cells.filter(c => occupied[c] && occupied[c] !== group);
+
+      if (conflicts.length) {
+        conflicts.forEach(c => {
+          const el = cellElements[c];
+          const prev = el.style.background;
+          el.style.background = "rgba(255,0,0,0.6)";
+          setTimeout(() => el.style.background = prev, 400);
+        });
+        return;
+      }
+
+      selectedGroups[group] = subject || true;
+      selectedGroupsColors[group] = getNextColor();
+
+      const display = subject || group;
+      const color = selectedGroupsColors[group];
+
+      for (const c of cells) {
+        occupied[c] = group;
+        const el = cellElements[c];
+
+        el.classList.add("filled");
+        el.style.background = color;
+        el.textContent = formatCellText(display);
+        el.title = display;
+      }
+
+      renderMatrix();
       closePopover();
     }
-  });
-}
 
-function closePopover() {
-  popover.style.display = "none";
-  popover.classList.remove("expanded");
+    // ---------- REMOVE ----------
 
-  if (activeCell) {
-    activeCell.style.outline = "";
-    activeCell = null;
-  }
-}
+    function removeGroup(group) {
+      delete selectedGroups[group];
+      delete selectedGroupsColors[group];
+      delete teacherData[group];
 
-// ---------- POSITIONING (FIXED) ----------
+      for (const c of slotGroups[group]) {
+        delete occupied[c];
+        const el = cellElements[c];
 
-function positionPopover(cell) {
-  const margin = 8;
+        el.classList.remove("filled");
+        el.style.background = "";
+        el.textContent = formatCellText(cellLabels[c]);
+        el.title = cellLabels[c];
+      }
 
-  const rect = cell.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  const popW = popover.offsetWidth;
-  const popH = popover.offsetHeight;
-
-  let left = rect.left;
-  let top = rect.bottom;
-
-  // horizontal bias (right edge fix)
-  if (rect.right > vw * 0.8) {
-    left = rect.right - popW;
-  }
-
-  // clamp
-  if (left + popW > vw - margin) {
-    left = vw - popW - margin;
-  }
-  if (left < margin) left = margin;
-
-  // deterministic vertical logic
-  const isMobile = vw < 600;
-  const isBottomZone = rect.bottom > vh * 0.7;
-
-  let mode = "popover";
-
-  if (isMobile && isBottomZone) {
-    mode = "expanded";
-  } else {
-    const spaceBelow = vh - rect.bottom;
-
-    if (spaceBelow >= popH) {
-      top = rect.bottom;
-    } else {
-      top = rect.top - popH;
-    }
-  }
-
-  return { left, top, mode };
-}
-
-// ---------- POPOVER ----------
-
-function showPopover(cell, id) {
-  closePopover();
-
-  activeCell = cell;
-  cell.style.outline = "2px solid black";
-
-  popover.style.display = "block";
-  popover.classList.remove("expanded");
-
-  renderOptions(id);
-
-  requestAnimationFrame(()=>{
-    const { left, top, mode } = positionPopover(cell);
-
-    if (mode === "expanded") {
-      popover.classList.add("expanded");
-    } else {
-      popover.style.left = left + "px";
-      popover.style.top = top + "px";
-    }
-  });
-}
-
-// ---------- OPTIONS ----------
-
-function getConflictCount(group) {
-  let count = 0;
-  for (const c of slotGroups[group]) {
-    if (occupied[c] && occupied[c] !== group) count++;
-  }
-  return count;
-}
-
-function renderOptions(cellId) {
-  popover.innerHTML = "";
-
-  const frag = document.createDocumentFragment();
-
-  const input = document.createElement("input");
-  input.placeholder = "Subject (optional)";
-  input.style.marginBottom = "8px";
-  frag.appendChild(input);
-
-  for (const g of cellToSortedGroups[cellId] || []) {
-    const btn = document.createElement("div");
-
-    btn.textContent = g.replaceAll("+"," + ");
-    btn.style.padding = "6px";
-    btn.style.cursor = "pointer";
-
-    const conflicts = getConflictCount(g);
-    if (conflicts > 0) {
-      btn.style.opacity = "0.5";
-      btn.style.color = "red";
-      btn.textContent += ` (${conflicts})`;
+      renderMatrix();
     }
 
-    btn.addEventListener("pointerdown", ()=>{
-      selectGroup(g, input.value.trim());
+    // ---------- MATRIX ----------
+
+    function renderMatrix() {
+      const tbody = document.querySelector("#matrix tbody");
+      tbody.innerHTML = "";
+
+      for (const g in selectedGroups) {
+        const tr = document.createElement("tr");
+
+        const td1 = document.createElement("td");
+        td1.textContent = selectedGroups[g] === true ? g : selectedGroups[g];
+
+        const td2 = document.createElement("td");
+        const input = document.createElement("input");
+
+        input.value = teacherData[g] || "";
+        input.oninput = e => teacherData[g] = e.target.value;
+
+        td2.appendChild(input);
+
+        tr.append(td1, td2);
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ---------- TOGGLE MATRIX ----------
+
+    const toggleMatrixBtn = document.getElementById("toggleMatrix");
+    const matrixContainer = document.getElementById("matrixContainer");
+
+    function updateToggleMatrixLabel() {
+      const isHidden = window.getComputedStyle(matrixContainer).display === "none";
+      toggleMatrixBtn.textContent = isHidden ? "Show Subjects" : "Hide Subjects";
+    }
+
+    toggleMatrixBtn.addEventListener("click", () => {
+      const isHidden = window.getComputedStyle(matrixContainer).display === "none";
+      matrixContainer.style.display = isHidden ? "" : "none";
+      updateToggleMatrixLabel();
     });
 
-    frag.appendChild(btn);
-  }
+    updateToggleMatrixLabel();
 
-  popover.appendChild(frag);
-}
+    // ---------- INIT ----------
 
-// ---------- SELECT ----------
-
-function selectGroup(group, subject) {
-  const cells = slotGroups[group];
-  const conflicts = cells.filter(c=>occupied[c] && occupied[c]!==group);
-
-  if (conflicts.length) {
-    conflicts.forEach(c=>{
-      const el = cellElements[c];
-      const prev = el.style.background;
-      el.style.background="rgba(255,0,0,0.6)";
-      setTimeout(()=>el.style.background=prev,400);
-    });
-    return;
-  }
-
-  selectedGroups[group] = subject || true;
-
-  const display = subject || group;
-
-  for (const c of cells) {
-    occupied[c]=group;
-    const el = cellElements[c];
-
-    el.classList.add("filled");
-    el.style.background = getColor(group);
-    el.textContent = formatCellText(display);
-    el.title = display;
-  }
-
-  renderMatrix();
-  closePopover();
-}
-
-// ---------- REMOVE ----------
-
-function removeGroup(group) {
-  delete selectedGroups[group];
-  delete teacherData[group];
-
-  for (const c of slotGroups[group]) {
-    delete occupied[c];
-    const el = cellElements[c];
-
-    el.classList.remove("filled");
-    el.style.background="";
-    el.textContent = formatCellText(cellLabels[c]);
-    el.title = cellLabels[c];
-  }
-
-  renderMatrix();
-}
-
-// ---------- MATRIX ----------
-
-function renderMatrix() {
-  const tbody = document.querySelector("#matrix tbody");
-  tbody.innerHTML="";
-
-  for (const g in selectedGroups) {
-    const tr = document.createElement("tr");
-
-    const td1 = document.createElement("td");
-    td1.textContent = selectedGroups[g]===true ? g : selectedGroups[g];
-
-    const td2 = document.createElement("td");
-    const input = document.createElement("input");
-
-    input.value = teacherData[g] || "";
-    input.oninput = e => teacherData[g] = e.target.value;
-
-    td2.appendChild(input);
-
-    tr.append(td1, td2);
-    tbody.appendChild(tr);
-  }
-}
-
-// ---------- INIT ----------
-
-buildGrid();
-init();
-</script>
+    buildGrid();
+    init();
+  </script>
