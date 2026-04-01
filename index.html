@@ -33,13 +33,13 @@
 
 h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
 }
 
 p {
   margin: 2px 0;
-  font-size: 12px;
+  font-size: 14px;
   color: #64748B;
 }
 
@@ -47,17 +47,15 @@ p {
 
 #grid {
   display: grid;
-  grid-template-columns: 70px repeat(12, minmax(70px, 1fr));
+  grid-template-columns: 70px repeat(6, minmax(70px, 1fr)) 20px repeat(6, minmax(70px, 1fr));
   gap: 2px;
   background: #0f172a;
   padding: 2px;
   border-radius: 6px;
 }
 
-/* day + header cells */
-#grid > div:first-child,
-#grid > div:nth-child(-n+13) {
-  font-size: 11px;
+.header-cell {
+  font-size: 12px;
   color: #64748B;
   display: flex;
   align-items: center;
@@ -75,7 +73,7 @@ p {
   align-items: center;
   justify-content: center;
 
-  font-size: 12px;
+  font-size: 14px;
   color: #94A3B8;
 
   cursor: pointer;
@@ -118,8 +116,8 @@ p {
 }
 
 #popover div {
-  padding: 6px 8px;
-  font-size: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
   color: #cbd5f5;
   text-align: left;
   display: flex;
@@ -138,6 +136,7 @@ p {
   
   margin-bottom: 8px;
   padding: 6px;
+  font-size: 13px;
   background: #020617;
   color: #E2E8F0;
   border: 1px solid #1e293b;
@@ -207,6 +206,14 @@ input {
   font-size: 12px;
   outline: none;
 }
+
+#popover div.conflict {
+  color: #ff3b3b;
+  background: rgba(255, 0, 0, 0.12);
+  font-weight: 600;
+  border-radius: 4px;
+}
+
   </style>
 </head>
 
@@ -216,7 +223,7 @@ input {
     <div id="header">
       <h1>FFCS Planner</h1>
       <p>Build your VIT timetable in seconds</p>
-      <p style="font-size:12px; opacity:0.7;">Tap a cell → choose slot → tap again to remove</p>
+      <p style="font-size:14px; opacity:0.7;">Tap a cell → choose slot → tap again to remove</p>
     </div>
 
     <div id="popover"></div>
@@ -261,6 +268,21 @@ input {
   "#38BDF8", "#A3E635", "#F97316", "#6366F1", "#10B981", "#E879F9"  // New (Set 2)
 ];
 
+    // ---------- TIME STRIP DATA ----------
+
+    const theoryTimes = [
+      "08:00-08:50","08:55-09:45","09:50-10:40","10:45-11:35",
+      "11:40-12:30","",
+      "02:00-02:50","02:55-03:45","03:50-04:40",
+      "04:45-05:35","05:40-06:30",""
+    ];
+
+    const labTimes = [
+      "08:00-08:50","08:50-09:40","09:50-10:40","10:40-11:30",
+      "11:40-12:30","12:30-01:20",
+      "02:00-02:50","02:50-03:40","03:50-04:40",
+      "04:40-05:30","05:40-06:30","06:30-07:20"
+    ];
 
     const getColor = g => {
       let h = 0;
@@ -453,50 +475,124 @@ input {
       let arr = Array.from(cellToSlotGroups[c]).filter(g => !isSingleLab(g));
       cellToSortedGroups[c] = sortGroups(arr);
     }
-
+    //----------- GRID TIME DATA ----------
+    
     // ---------- GRID ----------
 
-    function buildGrid() {
-      const days = ["mon", "tue", "wed", "thu", "fri"];
-      const periods = Array.from({ length: 12 }, (_, i) => i + 1);
-      const grid = document.getElementById("grid");
+      function buildGrid() {
+        const days = ["mon", "tue", "wed", "thu", "fri"];
+        const periods = Array.from({ length: 12 }, (_, i) => i + 1);
+        const grid = document.getElementById("grid");
 
-      grid.appendChild(document.createElement("div"));
+        // ---------- THEORY TIME STRIP ----------
+        const theoryLabel = document.createElement("div");
+        theoryLabel.textContent = "THEORY";
+        theoryLabel.style.fontWeight = "bold";
+        theoryLabel.className = "header-cell";
 
-      periods.forEach(p => {
-        const el = document.createElement("div");
-        el.textContent = "P" + p;
-        el.style.fontWeight = "bold";
-        grid.appendChild(el);
-      });
+        grid.appendChild(theoryLabel);
 
-      days.forEach(d => {
-        const day = document.createElement("div");
-        day.textContent = d.toUpperCase();
-        day.style.fontWeight = "bold";
-        grid.appendChild(day);
-
-        periods.forEach(p => {
-          const id = `${d}_p${p}`;
+        theoryTimes.forEach((t, i) => {
+          if (i === 6) {
+            const lunch = document.createElement("div");
+            lunch.textContent = "";
+            lunch.style.background = "";
+            grid.appendChild(lunch);
+          }
           const el = document.createElement("div");
-
-          el.className = "cell";
-          el.dataset.cell = id;
-
-          const label = (cellToSlotGroups[id] || [])
-            ? Array.from(cellToSlotGroups[id]).filter(isAtomic).sort().join('/')
-            : "";
-
-          el.textContent = formatCellText(label);
-          el.title = label;
-
-          cellLabels[id] = label;
-          cellElements[id] = el;
-
+          el.textContent = t;
+          el.style.fontWeight = "bold";
+          el.style.fontSize = "12px";
+          el.style.color = "white";
+          el.style.opacity = "0.7";
           grid.appendChild(el);
         });
-      });
-    }
+
+        // ---------- LAB TIME STRIP ----------
+        const labLabel = document.createElement("div");
+        labLabel.textContent = "LAB";
+        labLabel.style.fontWeight = "bold";
+        labLabel.className = "header-cell";
+        grid.appendChild(labLabel);
+
+        labTimes.forEach((t, i) => {
+          if (i === 6) {
+            const lunch = document.createElement("div");
+            lunch.style.background = "";
+            grid.appendChild(lunch);
+          }
+          const el = document.createElement("div");
+          el.textContent = t;
+          el.style.fontSize = "12px";
+          el.style.opacity = "0.7";
+          grid.appendChild(el);
+        });
+
+        // ---------- ORIGINAL HEADER ----------
+        grid.appendChild(document.createElement("div"));
+
+        periods.forEach((p, i) => {
+          if (i === 6) {
+            const lunch = document.createElement("div");
+            lunch.textContent = "";
+            lunch.style.fontSize = "10px";
+            lunch.style.color = "#64748B";
+            grid.appendChild(lunch);
+          }
+          const el = document.createElement("div");
+          el.textContent = "P" + p;
+          el.style.fontWeight = "bold";
+          grid.appendChild(el);
+        });
+
+        // ---------- ORIGINAL BODY ----------
+        days.forEach(d => {
+          const day = document.createElement("div");
+          day.textContent = d.toUpperCase();
+          day.style.fontWeight = "bold";
+          grid.appendChild(day);
+
+          periods.forEach((p, i) => {
+
+            if (i === 6) {
+              const lunch = document.createElement("div");
+              lunch.textContent = "";
+              lunch.style.fontSize = "10px";
+              lunch.style.color = "#64748B";
+              lunch.style.background = "";
+              lunch.style.display = "flex";
+              lunch.style.alignItems = "center";
+              lunch.style.justifyContent = "center";
+              grid.appendChild(lunch);
+            }
+            const id = `${d}_p${p}`;
+            const el = document.createElement("div");
+
+            el.className = "cell";
+            el.dataset.cell = id;
+
+            const groups = Array.from(cellToSlotGroups[id] || []);
+
+            // ✅ HANDLE X/Y HERE (no logic touched elsewhere)
+            if (groups.includes("X") || groups.includes("Y")) {
+              el.textContent = "EXTRA";
+              el.style.background = "#111827";
+              el.style.color = "#6B7280";
+              el.style.cursor = "default";
+              el.dataset.blocked = "true";
+            } else {
+              const label = groups.filter(isAtomic).sort().join('/');
+              el.textContent = formatCellText(label);
+              el.title = label;
+
+              cellLabels[id] = label;
+            }
+
+            cellElements[id] = el;
+            grid.appendChild(el);
+          });
+        });
+      }
 
     // ---------- INTERACTION ----------
 
@@ -507,6 +603,7 @@ input {
 
         // capture intent
         cell.addEventListener("pointerdown", (e) => {
+          if (cell.dataset.blocked) return;
           pointerStart = {
             x: e.clientX,
             y: e.clientY,
@@ -686,8 +783,7 @@ input {
 
         const conflicts = getConflictCount(g);
         if (conflicts > 0) {
-          btn.style.opacity = "0.5";
-          btn.style.color = "red";
+          btn.classList.add("conflict");
           btn.textContent += ` (${conflicts})`;
         }
 
