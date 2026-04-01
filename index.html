@@ -23,7 +23,6 @@
 /* ---------- HEADER ---------- */
 
 #app {
-  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -70,7 +69,7 @@ p {
 .cell {
   background: #020617;
   border: 1px solid #1e293b;
-  height: 64px;
+  height: 80px;
 
   display: flex;
   align-items: center;
@@ -80,15 +79,15 @@ p {
   color: #94A3B8;
 
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.05s ease;
 }
 
 .cell:hover {
   background: #0f172a;
 }
 
-.cell:active {
-  transform: scale(0.97);
+.cell.active {
+  outline: 2px solid #3B82F6;
+  outline-offset: -2px;
 }
 
 /* selected */
@@ -503,27 +502,31 @@ input {
 
     function init() {
       document.querySelectorAll(".cell").forEach(cell => {
-        cell.addEventListener("click", () => {
+        cell.addEventListener("pointerdown", (e) => {
+          e.stopPropagation();
+
           const id = cell.dataset.cell;
           const group = occupied[id];
 
-          // If cell has a selection, delete it
+          // delete
           if (group) {
             removeGroup(group);
+            return;
           }
-          // If popover is open for this cell, close it
-          else if (activeCell === cell && popover.style.display === "block") {
+
+          // toggle popover
+          if (activeCell === cell && popover.style.display === "block") {
             closePopover();
+            return;
           }
-          // Otherwise, open popover
-          else {
-            showPopover(cell, id);
-          }
+
+          showPopover(cell, id);
         });
       });
 
-      document.addEventListener("click", e => {
-        if (!e.target.closest(".cell") && !e.target.closest("#popover")) {
+      // close popover
+      document.addEventListener("pointerdown", (e) => {
+        if (!e.target.closest("#popover")) {
           closePopover();
         }
       });
@@ -534,7 +537,7 @@ input {
       popover.classList.remove("expanded");
 
       if (activeCell) {
-        activeCell.style.outline = "";
+        activeCell.classList.remove("active");
         activeCell = null;
       }
     }
@@ -592,7 +595,12 @@ input {
       closePopover();
 
       activeCell = cell;
-      cell.style.outline = "2px solid black";
+      if (activeCell) {
+        activeCell.classList.remove("active");
+      }
+
+      activeCell = cell;
+      cell.classList.add("active");
 
       popover.style.display = "block";
       popover.classList.remove("expanded");
@@ -645,7 +653,8 @@ input {
           btn.textContent += ` (${conflicts})`;
         }
 
-        btn.addEventListener("pointerdown", () => {
+        btn.addEventListener("pointerdown", (e) => {
+          e.stopPropagation();
           selectGroup(g, input.value.trim());
         });
 
