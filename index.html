@@ -936,9 +936,11 @@
 
       if (conflicts.length) {
         console.log("Conflicts:", conflicts);
-        if (soundVariable === 0)
+        if (soundVariable === 0){
           playSound();
-        soundBite = 1;
+          soundVariable = 1;
+        }
+
         conflicts.forEach(c => {
           const el = cellElements[c];
           const prev = el.style.background;
