@@ -9,241 +9,243 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <meta property="og:title" content="VIT FFCS Planner">
-  <meta property="og:description" content="Instantly build your VIT timetable. No login, no lag. Test slot combinations in seconds.">
+  <meta property="og:description"
+    content="Instantly build your VIT timetable. No login, no lag. Test slot combinations in seconds.">
   <meta name="keywords" content="VIT FFCS Planner, VIT timetable planner, FFCS slot planner, VIT slot combinations">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://vit-ffcs-planner.pages.dev/og.png">
   <meta property="og:url" content="https://vit-ffcs-planner.pages.dev">
-  <meta name="description" content="Quickly test and build VIT FFCS timetables. No login, no recommendations. Fast scratchpad for slot combinations.">
+  <meta name="description"
+    content="Quickly test and build VIT FFCS timetables. No login, no recommendations. Fast scratchpad for slot combinations.">
 
   <style>
-* {
-  -webkit-tap-highlight-color: transparent;
-}
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
 
-html {
-  font-size: 16px;
-  scrollbar-gutter: stable;
-  overflow-y: scroll;
-}
+    html {
+      font-size: 16px;
+      scrollbar-gutter: stable;
+      overflow-y: scroll;
+    }
 
-body {
-  background: #020617;
-  color: #E2E8F0;
-  font-family: system-ui;
-  margin: 0;
-  padding: 0.75rem 1rem;
-}
+    body {
+      background: #020617;
+      color: #E2E8F0;
+      font-family: system-ui;
+      margin: 0;
+      padding: 0.75rem 1rem;
+    }
 
-/* ---------- HEADER ---------- */
+    /* ---------- HEADER ---------- */
 
-#app {
-  margin: 0 auto;
-}
+    #app {
+      margin: 0 auto;
+    }
 
-#header {
-  text-align: left;
-  margin-bottom: 0.75rem;
-}
+    #header {
+      text-align: left;
+      margin-bottom: 0.75rem;
+    }
 
-h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
 
-p {
-  margin: 0.125rem 0;
-  font-size: 0.875rem;
-  color: #64748B;
-}
+    p {
+      margin: 0.125rem 0;
+      font-size: 0.875rem;
+      color: #64748B;
+    }
 
-/* ---------- GRID ---------- */
+    /* ---------- GRID ---------- */
 
-#grid {
-  display: grid;
+    #grid {
+      display: grid;
 
-  grid-template-columns:
-    4.375rem
-    repeat(6, minmax(3.5rem, 1fr))  /* 👈 reduced min */
-    1.25rem
-    repeat(6, minmax(3.5rem, 1fr));
+      grid-template-columns:
+        4.375rem repeat(6, minmax(3.5rem, 1fr))
+        /* 👈 reduced min */
+        1.25rem repeat(6, minmax(3.5rem, 1fr));
 
-  gap: 0.125rem;
-  padding: 0.125rem;
-  border-radius: 0.375rem;
-  background: #0f172a;
+      gap: 0.125rem;
+      padding: 0.125rem;
+      border-radius: 0.375rem;
+      background: #0f172a;
 
-  overflow-x: auto; /* 👈 critical for mobile */
-}
-
-
-.header-cell {
-  font-size: 0.75rem;
-  color: #64748B;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ---------- CELLS ---------- */
-
-.cell {
-  background: #020617;
-  border: 1px solid #1e293b;
-
-  height: 5rem;
-  font-size: 0.875rem;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-
-  color: #94A3B8;
-  cursor: pointer;
-}
-
-.cell:hover {
-  background: #0f172a;
-}
-
-.cell.active {
-  outline: 0.125rem solid #3B82F6;
-  outline-offset: -0.125rem;
-}
-
-.filled {
-  color: black;
-  font-weight: 800;
-  box-shadow: inset 0 0 0 0.0625rem rgba(255,255,255,0.2);
-}
-
-/* ---------- POPOVER ---------- */
-
-#popover {
-  position: absolute;
-  display: none;
-
-  background: #020617;
-  border: 0.0625rem solid #94A3B8;
-
-  width: 12.5rem;
-  max-height: 17.5rem;
-
-  padding: 0.625rem;
-  border-radius: 0.5rem;
-
-  overflow-y: auto;
-  box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.6);
-  z-index: 1000;
-}
-
-#popover div {
-  padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
-
-  color: #cbd5f5;
-
-  display: flex;
-  align-items: center;
-}
-
-#popover div:hover {
-  background: #0f172a;
-}
+      overflow-x: auto;
+      /* 👈 critical for mobile */
+    }
 
 
-/* input */
-#popover input {
-  width: 100%;
-  box-sizing: border-box;
+    .header-cell {
+      font-size: 0.75rem;
+      color: #64748B;
 
-  margin-bottom: 0.5rem;
-  padding: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-  font-size: 0.8125rem;
+    /* ---------- CELLS ---------- */
 
-  background: #020617;
-  color: #E2E8F0;
+    .cell {
+      background: #020617;
+      border: 1px solid #1e293b;
 
-  border: 0.0625rem solid #1e293b;
-  border-radius: 0.375rem;
-}
+      height: 5rem;
+      font-size: 0.875rem;
 
-/* mobile sheet */
-#popover.expanded {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
 
-  width: 100%;
-  max-height: 50vh;
+      color: #94A3B8;
+      cursor: pointer;
+    }
 
-  border-radius: 0.75rem 0.75rem 0 0;
-}
+    .cell:hover {
+      background: #0f172a;
+    }
 
-/* ---------- MATRIX ---------- */
+    .cell.active {
+      outline: 0.125rem solid #3B82F6;
+      outline-offset: -0.125rem;
+    }
 
-#toggleMatrix {
-  margin-top: 0.75rem;
+    .filled {
+      color: black;
+      font-weight: 800;
+      box-shadow: inset 0 0 0 0.0625rem rgba(255, 255, 255, 0.2);
+    }
 
-  background: #1e293b;
-  color: #E2E8F0;
-  border: 0.0625rem solid #334155;
+    /* ---------- POPOVER ---------- */
 
-  padding: 0.375rem 0.875rem;
-  border-radius: 999rem;
+    #popover {
+      position: absolute;
+      display: none;
 
-  cursor: pointer;
-}
+      background: #020617;
+      border: 0.0625rem solid #94A3B8;
 
-#toggleMatrix:hover {
-  background: #334155;
-}
+      width: 12.5rem;
+      max-height: 17.5rem;
 
-#matrixContainer {
-  margin-top: 0.625rem;
-}
+      padding: 0.625rem;
+      border-radius: 0.5rem;
 
-table {
-  width: 100%;
-  max-width: 26.25rem;
+      overflow-y: auto;
+      box-shadow: 0 0.625rem 1.875rem rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+    }
 
-  border-collapse: collapse;
-  background: #020617;
+    #popover div {
+      padding: 0.625rem 0.75rem;
+      font-size: 0.875rem;
 
-  border: 0.0625rem solid #1e293b;
-}
+      color: #cbd5f5;
 
-th {
-  font-size: 0.6875rem;
-  color: #64748B;
-}
+      display: flex;
+      align-items: center;
+    }
 
-td, th {
-  padding: 0.375rem;
-  border-bottom: 0.0625rem solid #1e293b;
-}
+    #popover div:hover {
+      background: #0f172a;
+    }
 
-input {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: #E2E8F0;
-  font-size: 0.75rem;
-  outline: none;
-}
 
-#popover div.conflict {
-  color: #ff3b3b;
-  background: rgba(255, 0, 0, 0.12);
-  font-weight: 600;
-  border-radius: 0.25rem;
-}
+    /* input */
+    #popover input {
+      width: 100%;
+      box-sizing: border-box;
 
+      margin-bottom: 0.5rem;
+      padding: 0.375rem;
+
+      font-size: 0.8125rem;
+
+      background: #020617;
+      color: #E2E8F0;
+
+      border: 0.0625rem solid #1e293b;
+      border-radius: 0.375rem;
+    }
+
+    /* mobile sheet */
+    #popover.expanded {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      width: 100%;
+      max-height: 50vh;
+
+      border-radius: 0.75rem 0.75rem 0 0;
+    }
+
+    /* ---------- MATRIX ---------- */
+
+    #toggleMatrix {
+      margin-top: 0.75rem;
+
+      background: #1e293b;
+      color: #E2E8F0;
+      border: 0.0625rem solid #334155;
+
+      padding: 0.375rem 0.875rem;
+      border-radius: 999rem;
+
+      cursor: pointer;
+    }
+
+    #toggleMatrix:hover {
+      background: #334155;
+    }
+
+    #matrixContainer {
+      margin-top: 0.625rem;
+    }
+
+    table {
+      width: 100%;
+      max-width: 26.25rem;
+
+      border-collapse: collapse;
+      background: #020617;
+
+      border: 0.0625rem solid #1e293b;
+    }
+
+    th {
+      font-size: 0.6875rem;
+      color: #64748B;
+    }
+
+    td,
+    th {
+      padding: 0.375rem;
+      border-bottom: 0.0625rem solid #1e293b;
+    }
+
+    input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #E2E8F0;
+      font-size: 0.75rem;
+      outline: none;
+    }
+
+    #popover div.conflict {
+      color: #ff3b3b;
+      background: rgba(255, 0, 0, 0.12);
+      font-weight: 600;
+      border-radius: 0.25rem;
+    }
   </style>
 </head>
 
@@ -276,53 +278,56 @@ input {
   </div>
 
 
-<details style="max-width:700px;margin:40px auto;color:#94A3B8;">
-  <summary style="cursor:pointer;color:#E2E8F0;font-weight:600;">
-    About this VIT FFCS Planner
-  </summary>
+  <details style="max-width:700px;margin:40px auto;color:#94A3B8;">
+    <summary style="cursor:pointer;color:#E2E8F0;font-weight:600;">
+      About this VIT FFCS Planner
+    </summary>
 
-  <div id="seo-content" style="max-width: 700px; margin: 40px auto; text-align: left; line-height: 1.6; color: #94A3B8;">
+    <div id="seo-content"
+      style="max-width: 700px; margin: 40px auto; text-align: left; line-height: 1.6; color: #94A3B8;">
 
-    <h2 style="color: #E2E8F0;">What is this VIT FFCS Planner?</h2>
-    <p>
-      This is a fast, no-login VIT FFCS planner built to help students test slot combinations instantly.
-      Instead of going through multiple tabs or slow planners, you can directly click on slots and build your timetable in seconds.
-    </p>
+      <h2 style="color: #E2E8F0;">What is this VIT FFCS Planner?</h2>
+      <p>
+        This is a fast, no-login VIT FFCS planner built to help students test slot combinations instantly.
+        Instead of going through multiple tabs or slow planners, you can directly click on slots and build your
+        timetable in seconds.
+      </p>
 
-    <h2 style="color: #E2E8F0;">How to use the FFCS Planner</h2>
-    <ul>
-      <li>Tap any cell in the timetable</li>
-      <li>Select a slot combination</li>
-      <li>Add subject names if needed</li>
-      <li>Avoid clashes automatically</li>
-    </ul>
+      <h2 style="color: #E2E8F0;">How to use the FFCS Planner</h2>
+      <ul>
+        <li>Tap any cell in the timetable</li>
+        <li>Select a slot combination</li>
+        <li>Add subject names if needed</li>
+        <li>Avoid clashes automatically</li>
+      </ul>
 
-    <p>
-      You can quickly experiment with different FFCS slot combinations and finalize your timetable without confusion.
-    </p>
+      <p>
+        You can quickly experiment with different FFCS slot combinations and finalize your timetable without confusion.
+      </p>
 
-    <h2 style="color: #E2E8F0;">Why this planner is faster</h2>
-    <ul>
-      <li>No login or account required</li>
-      <li>Instant slot selection with visual feedback</li>
-      <li>Built specifically for VIT FFCS structure</li>
-      <li>Works smoothly on mobile and desktop</li>
-    </ul>
+      <h2 style="color: #E2E8F0;">Why this planner is faster</h2>
+      <ul>
+        <li>No login or account required</li>
+        <li>Instant slot selection with visual feedback</li>
+        <li>Built specifically for VIT FFCS structure</li>
+        <li>Works smoothly on mobile and desktop</li>
+      </ul>
 
-    <h2 style="color: #E2E8F0;">Who is this for?</h2>
-    <p>
-      This FFCS planner is designed for VIT students who want a quick and simple way to build their timetable during course registration.
-      It is especially useful when testing multiple slot combinations under time pressure.
-    </p>
+      <h2 style="color: #E2E8F0;">Who is this for?</h2>
+      <p>
+        This FFCS planner is designed for VIT students who want a quick and simple way to build their timetable during
+        course registration.
+        It is especially useful when testing multiple slot combinations under time pressure.
+      </p>
 
-    <h2 style="color: #E2E8F0;">Common searches this tool helps with</h2>
-    <p>
-      VIT FFCS planner, VIT timetable planner, FFCS slot combinations, VIT slot planner, FFCS timetable builder.
-    </p>
+      <h2 style="color: #E2E8F0;">Common searches this tool helps with</h2>
+      <p>
+        VIT FFCS planner, VIT timetable planner, FFCS slot combinations, VIT slot planner, FFCS timetable builder.
+      </p>
 
-  </div>
+    </div>
 
-</details>
+  </details>
 
 
 
@@ -340,56 +345,57 @@ input {
     let cellElements = {};
     let activeCell = null;
     let colorIndex = 0;
+    let soundVariable = 0;
 
     const popover = document.getElementById("popover");
 
     // ---------- UTIL ----------
 
     const colors = [
-                    "#E57373", // muted red
-                    "#64B5F6", // blue
-                    "#4DB6AC", // teal
-                    "#FFD54F", // soft yellow
-                    "#9575CD", // purple
-                    "#FF8A65", // orange
+      "#E57373", // muted red
+      "#64B5F6", // blue
+      "#4DB6AC", // teal
+      "#FFD54F", // soft yellow
+      "#9575CD", // purple
+      "#FF8A65", // orange
 
-                    "#F06292", // pink
-                    "#7986CB", // indigo
-                    "#4FC3F7", // sky blue
-                    "#81C784", // green
-                    "#BA68C8", // violet
-                    "#FFB74D", // amber
+      "#F06292", // pink
+      "#7986CB", // indigo
+      "#4FC3F7", // sky blue
+      "#81C784", // green
+      "#BA68C8", // violet
+      "#FFB74D", // amber
 
-                    "#AED581", // light green
-                    "#4DD0E1", // cyan
-                    "#A1887F", // brown (important contrast break)
-                    "#90A4AE", // blue grey (neutral slot)
-                    "#DCE775", // lime
-                    "#FFAB91", // soft coral
+      "#AED581", // light green
+      "#4DD0E1", // cyan
+      "#A1887F", // brown (important contrast break)
+      "#90A4AE", // blue grey (neutral slot)
+      "#DCE775", // lime
+      "#FFAB91", // soft coral
 
-                    "#CE93D8", // light purple
-                    "#80CBC4", // soft teal
-                    "#B0BEC5", // grey-blue neutral
-                    "#FFCC80", // pale orange
-                    "#9FA8DA", // desaturated indigo
-                    "#A5D6A7"  // soft green
-                  ];
+      "#CE93D8", // light purple
+      "#80CBC4", // soft teal
+      "#B0BEC5", // grey-blue neutral
+      "#FFCC80", // pale orange
+      "#9FA8DA", // desaturated indigo
+      "#A5D6A7"  // soft green
+    ];
 
 
     // ---------- TIME STRIP DATA ----------
 
     const theoryTimes = [
-      "08:00-08:50","08:55-09:45","09:50-10:40","10:45-11:35",
-      "11:40-12:30","",
-      "02:00-02:50","02:55-03:45","03:50-04:40",
-      "04:45-05:35","05:40-06:30",""
+      "08:00-08:50", "09:00-09:50", "10:00-10:50", "11:00-11:50",
+      "12:00-12:50", "",
+      "02:00-02:50", "03:00-03:50", "04:00-04:50",
+      "05:00-05:50", "06:00-06:50", ""
     ];
 
     const labTimes = [
-      "08:00-08:50","08:50-09:40","09:50-10:40","10:40-11:30",
-      "11:40-12:30","12:30-01:20",
-      "02:00-02:50","02:50-03:40","03:50-04:40",
-      "04:40-05:30","05:40-06:30","06:30-07:20"
+      "08:00-08:50", "08:51-09:40", "09:51-10:40", "10:41-11:30",
+      "11:40-12:30", "12:30-01:20",
+      "02:00-02:50", "02:51-03:40", "03:51-04:40",
+      "04:41-05:30", "05:40-06:30", "06:31-07:20"
     ];
 
     const getNextColor = () => {
@@ -401,6 +407,16 @@ input {
     const isAtomic = g => !g.includes('+');
     const isSingleLab = g => /^L\d+$/.test(g);
     const formatCellText = t => t.length > 9 ? t.slice(0, 9) + "…" : t;
+
+    const makeCellLabel = (groups) => {
+      const theory = groups.filter(isAtomic).filter(g => !g.startsWith('L')).sort();
+      const lab = groups.filter(isAtomic).filter(g => g.startsWith('L')).sort((a, b) => {
+        const na = +a.replace(/^L/, '');
+        const nb = +b.replace(/^L/, '');
+        return na - nb;
+      });
+      return theory.length && lab.length ? `${theory.join('/')}/${lab.join('/')}` : [...theory, ...lab].join('/');
+    };
 
     // ---------- COMBINATIONS ----------
 
@@ -578,123 +594,123 @@ input {
       cellToSortedGroups[c] = sortGroups(arr);
     }
     //----------- GRID TIME DATA ----------
-    
+
     // ---------- GRID ----------
 
-      function buildGrid() {
-        const days = ["mon", "tue", "wed", "thu", "fri"];
-        const periods = Array.from({ length: 12 }, (_, i) => i + 1);
-        const grid = document.getElementById("grid");
+    function buildGrid() {
+      const days = ["mon", "tue", "wed", "thu", "fri"];
+      const periods = Array.from({ length: 12 }, (_, i) => i + 1);
+      const grid = document.getElementById("grid");
 
-        // ---------- THEORY TIME STRIP ----------
-        const theoryLabel = document.createElement("div");
-        theoryLabel.textContent = "THEORY";
-        theoryLabel.style.fontWeight = "bold";
-        theoryLabel.className = "header-cell";
+      // ---------- THEORY TIME STRIP ----------
+      const theoryLabel = document.createElement("div");
+      theoryLabel.textContent = "THEORY";
+      theoryLabel.style.fontWeight = "bold";
+      theoryLabel.className = "header-cell";
 
-        grid.appendChild(theoryLabel);
+      grid.appendChild(theoryLabel);
 
-        theoryTimes.forEach((t, i) => {
-          if (i === 6) {
-            const lunch = document.createElement("div");
-            lunch.textContent = "";
-            lunch.style.background = "";
-            grid.appendChild(lunch);
-          }
-          const el = document.createElement("div");
-          el.textContent = t;
-          el.style.fontWeight = "bold";
-          el.style.fontSize = "12px";
-          el.style.color = "white";
-          el.style.opacity = "0.7";
-          grid.appendChild(el);
-        });
+      theoryTimes.forEach((t, i) => {
+        if (i === 6) {
+          const lunch = document.createElement("div");
+          lunch.textContent = "";
+          lunch.style.background = "";
+          grid.appendChild(lunch);
+        }
+        const el = document.createElement("div");
+        el.textContent = t;
+        el.style.fontWeight = "500";
+        el.style.fontSize = "12px";
+        el.style.color = "white";
+        el.style.opacity = "0.7";
+        grid.appendChild(el);
+      });
 
-        // ---------- LAB TIME STRIP ----------
-        const labLabel = document.createElement("div");
-        labLabel.textContent = "LAB";
-        labLabel.style.fontWeight = "bold";
-        labLabel.className = "header-cell";
-        grid.appendChild(labLabel);
+      // ---------- LAB TIME STRIP ----------
+      const labLabel = document.createElement("div");
+      labLabel.textContent = "LAB";
+      labLabel.style.fontWeight = "bold";
+      labLabel.className = "header-cell";
+      grid.appendChild(labLabel);
 
-        labTimes.forEach((t, i) => {
-          if (i === 6) {
-            const lunch = document.createElement("div");
-            lunch.style.background = "";
-            grid.appendChild(lunch);
-          }
-          const el = document.createElement("div");
-          el.textContent = t;
-          el.style.fontSize = "12px";
-          el.style.opacity = "0.7";
-          grid.appendChild(el);
-        });
+      labTimes.forEach((t, i) => {
+        if (i === 6) {
+          const lunch = document.createElement("div");
+          lunch.style.background = "";
+          grid.appendChild(lunch);
+        }
+        const el = document.createElement("div");
+        el.textContent = t;
+        el.style.fontSize = "12px";
+        el.style.opacity = "0.7";
+        grid.appendChild(el);
+      });
 
-        // ---------- ORIGINAL HEADER ----------
-        grid.appendChild(document.createElement("div"));
+      // ---------- ORIGINAL HEADER ----------
+      grid.appendChild(document.createElement("div"));
+
+      periods.forEach((p, i) => {
+        if (i === 6) {
+          const lunch = document.createElement("div");
+          lunch.textContent = "";
+          lunch.style.fontSize = "10px";
+          lunch.style.color = "#64748B";
+          grid.appendChild(lunch);
+        }
+        const el = document.createElement("div");
+        el.textContent = "P" + p;
+        el.style.fontWeight = "bold";
+        grid.appendChild(el);
+      });
+
+      // ---------- ORIGINAL BODY ----------
+      days.forEach(d => {
+        const day = document.createElement("div");
+        day.textContent = d.toUpperCase();
+        day.style.fontWeight = "bold";
+        grid.appendChild(day);
 
         periods.forEach((p, i) => {
+
           if (i === 6) {
             const lunch = document.createElement("div");
             lunch.textContent = "";
             lunch.style.fontSize = "10px";
             lunch.style.color = "#64748B";
+            lunch.style.background = "";
+            lunch.style.display = "flex";
+            lunch.style.alignItems = "center";
+            lunch.style.justifyContent = "center";
             grid.appendChild(lunch);
           }
+          const id = `${d}_p${p}`;
           const el = document.createElement("div");
-          el.textContent = "P" + p;
-          el.style.fontWeight = "bold";
+
+          el.className = "cell";
+          el.dataset.cell = id;
+
+          const groups = Array.from(cellToSlotGroups[id] || []);
+
+          // ✅ HANDLE X/Y HERE (no logic touched elsewhere)
+          if (groups.includes("X") || groups.includes("Y")) {
+            el.textContent = "EXTRA";
+            el.style.background = "#111827";
+            el.style.color = "#6B7280";
+            el.style.cursor = "default";
+            el.dataset.blocked = "true";
+          } else {
+            const label = makeCellLabel(groups);
+            el.textContent = formatCellText(label);
+            el.title = label;
+
+            cellLabels[id] = label;
+          }
+
+          cellElements[id] = el;
           grid.appendChild(el);
         });
-
-        // ---------- ORIGINAL BODY ----------
-        days.forEach(d => {
-          const day = document.createElement("div");
-          day.textContent = d.toUpperCase();
-          day.style.fontWeight = "bold";
-          grid.appendChild(day);
-
-          periods.forEach((p, i) => {
-
-            if (i === 6) {
-              const lunch = document.createElement("div");
-              lunch.textContent = "";
-              lunch.style.fontSize = "10px";
-              lunch.style.color = "#64748B";
-              lunch.style.background = "";
-              lunch.style.display = "flex";
-              lunch.style.alignItems = "center";
-              lunch.style.justifyContent = "center";
-              grid.appendChild(lunch);
-            }
-            const id = `${d}_p${p}`;
-            const el = document.createElement("div");
-
-            el.className = "cell";
-            el.dataset.cell = id;
-
-            const groups = Array.from(cellToSlotGroups[id] || []);
-
-            // ✅ HANDLE X/Y HERE (no logic touched elsewhere)
-            if (groups.includes("X") || groups.includes("Y")) {
-              el.textContent = "EXTRA";
-              el.style.background = "#111827";
-              el.style.color = "#6B7280";
-              el.style.cursor = "default";
-              el.dataset.blocked = "true";
-            } else {
-              const label = groups.filter(isAtomic).sort().join('/');
-              el.textContent = formatCellText(label);
-              el.title = label;
-
-              cellLabels[id] = label;
-            }
-
-            cellElements[id] = el;
-            grid.appendChild(el);
-          });
-        });
-      }
+      });
+    }
 
     // ---------- INTERACTION ----------
 
@@ -920,7 +936,9 @@ input {
 
       if (conflicts.length) {
         console.log("Conflicts:", conflicts);
-        playSound();
+        if (soundVariable === 0)
+          playSound();
+        soundBite = 1;
         conflicts.forEach(c => {
           const el = cellElements[c];
           const prev = el.style.background;
@@ -1020,22 +1038,21 @@ input {
   </script>
 
   <style>
-    
-@media (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
+    @media (max-width: 1000px) {
+      html {
+        font-size: 14px;
+      }
 
-  .cell {
-    height: 3rem;
-    font-size: 0.8rem;
-  }
+      .cell {
+        height: 3rem;
+        font-size: 0.8rem;
+      }
 
-}
+    }
 
-@media (max-width: 480px) {
-  html {
-    font-size: 13px;
-  }
-}
+    @media (max-width: 480px) {
+      html {
+        font-size: 13px;
+      }
+    }
   </style>
