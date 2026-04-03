@@ -96,6 +96,23 @@
       justify-content: center;
     }
 
+    .linkCopy {
+      margin-top: 0.75rem;
+
+      background: #042d6e;
+      color: #ffffff;
+      border: 0.0625rem solid #ffffff;
+
+      padding: 0.6rem 1rem;
+      border-radius: 999rem;
+
+      cursor: pointer;
+    }
+
+    .linkCopy:hover {
+      background: #334155;
+    }
+
     /* ---------- CELLS ---------- */
 
     .cell {
@@ -259,10 +276,16 @@
 <body>
   <div id="app" style="width: 100%; text-align: center;">
 
-    <div id="header">
-      <h1>VIT FFCS Planner</h1>
-      <p>Build your VIT timetable in seconds</p>
-      <p style="font-size:14px; opacity:0.7;">Tap a cell → choose slot → tap again to remove</p>
+    <div id="header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: inline-block;">
+        <h1>VIT FFCS Planner</h1>
+        <p>Build your VIT timetable in seconds</p>
+        <p style="font-size:14px; opacity:0.7;">Tap a cell → choose slot → tap again to remove</p>
+      </div>
+      <div style="display: inline-block; text-align: right;">
+        <p>Share your timetable with friends</p>
+        <button onclick="copyShareLink()" class="linkCopy">Share timetable</button>
+      </div>
     </div>
 
     <div id="popover"></div>
@@ -461,6 +484,34 @@
       }
       return out;
     }
+
+
+    function generateShareURL() {
+      const parts = [];
+
+      const groups = Object.keys(selectedGroups).sort(); // FIX
+
+      for (const g of groups) {
+        const val = selectedGroups[g];
+
+        if (val === true) {
+          parts.push(encodeURIComponent(g));
+        } else {
+          parts.push(`${encodeURIComponent(g)}:${encodeURIComponent(val)}`);
+        }
+      }
+
+      const param = parts.join(",");
+      return `${window.location.origin}${window.location.pathname}?t=${param}`;
+    }
+
+
+  function copyShareLink() {
+    const url = generateShareURL();
+    navigator.clipboard.writeText(url);
+    alert("Link copied!");
+  }
+
 
     // ---------- INIT DATA ----------
 
@@ -1044,6 +1095,54 @@
 
     buildGrid();
     init();
+    loadFromURL();
+
+    function loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const data = params.get("t");
+
+      if (!data) return;
+      console.log(data);
+      const items = data.split(",");
+
+      items.forEach(item => {
+        let [group, subject] = item.split(":");
+        group = decodeURIComponent(group);
+        subject = subject ? decodeURIComponent(subject) : "";
+
+        if (!slotGroups[group]) return; // ignore invalid
+
+        subject = subject ? decodeURIComponent(subject) : "";
+
+        applyGroupDirect(group, subject);
+      });
+    }
+
+
+    function applyGroupDirect(group, subject) {
+      const cells = slotGroups[group];
+
+      selectedGroups[group] = subject || true;
+      selectedGroupsColors[group] = getNextColor();
+
+      const display = subject || group;
+      const color = selectedGroupsColors[group];
+
+      for (const c of cells) {
+        if (occupied[c]) continue;
+        
+        occupied[c] = group;
+        const el = cellElements[c];
+
+        el.classList.add("filled");
+        el.style.background = color;
+        el.textContent = formatCellText(display);
+        el.title = display;
+      }
+
+      renderMatrix();
+    }
+
   </script>
 
   <style>
