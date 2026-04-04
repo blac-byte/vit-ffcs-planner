@@ -28,12 +28,14 @@
   <style>
     * {
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
     }
 
     html {
       font-size: 16px;
       scrollbar-gutter: stable;
       overflow-y: scroll;
+      touch-action: manipulation;
     }
 
     body {
@@ -42,6 +44,9 @@
       font-family: system-ui;
       margin: 0;
       padding: 0.75rem 1rem;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
     }
 
     /* ---------- HEADER ---------- */
@@ -129,10 +134,21 @@
 
       color: #94A3B8;
       cursor: pointer;
+
+
+      user-select: none;
+      -webkit-user-select: none;   /* iOS Safari */
+      -webkit-touch-callout: none; /* disables long-press menu on iOS */
+      touch-action: manipulation;
+      -ms-user-select: none;
+
+      touch-action: manipulation;  /* prevents weird gesture interpretation */
     }
 
-    .cell:hover {
-      background: #0f172a;
+    @media (hover: hover) {
+      .cell:hover {
+        background: #0f172a;
+      }
     }
 
     .cell.active {
@@ -262,6 +278,11 @@
       color: #E2E8F0;
       font-size: 0.75rem;
       outline: none;
+    }
+
+    input, textarea {
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     #popover div.conflict {
