@@ -1,4 +1,3 @@
 User-agent: *
-Disallow:
-
-Sitemap: https://example.com/sitemap.xml
+Allow: /
+Sitemap: https://vit-ffcs-planner.pages.dev/sitemap.xml
