@@ -114,7 +114,7 @@
       justify-content: center;
     }
 
-    .linkCopy {
+    button {
       margin-top: 0.75rem;
 
       background: #042d6e;
@@ -127,7 +127,7 @@
       cursor: pointer;
     }
 
-    .linkCopy:hover {
+    button:hover {
       background: #334155;
     }
 
@@ -378,6 +378,7 @@
       </div>
       <div style="display: inline-block; text-align: right;">
         <button onclick="copyShareLink()" class="linkCopy">Share timetable</button>
+        <button id="toggleTimings" class="showTiming">Show Timings</button>
       </div>
     </div>
 
@@ -755,8 +756,22 @@
       let arr = Array.from(cellToSlotGroups[c]).filter(g => !isSingleLab(g));
       cellToSortedGroups[c] = sortGroups(arr);
     }
-    //----------- GRID TIME DATA ----------
+    //----------- GRID TIME HIDE ----------
 
+
+
+    const toggle = document.getElementById("toggleTimings");
+
+    toggle.addEventListener("click", () => {
+      document.body.classList.toggle("show-timings");
+
+      toggle.textContent =
+        document.body.classList.contains("show-timings")
+          ? "Hide Timings"
+          : "Show Timings";
+    });
+
+    
     // ---------- GRID ----------
 
     function buildGrid() {
@@ -768,18 +783,20 @@
       const theoryLabel = document.createElement("div");
       theoryLabel.textContent = "THEORY";
       theoryLabel.style.fontWeight = "bold";
-      theoryLabel.className = "header-cell";
+      theoryLabel.className = "header-cell time-label";
 
       grid.appendChild(theoryLabel);
 
       theoryTimes.forEach((t, i) => {
         if (i === 6) {
           const lunch = document.createElement("div");
+          lunch.classList.add("time-label");
           lunch.textContent = "";
           lunch.style.background = "";
           grid.appendChild(lunch);
         }
         const el = document.createElement("div");
+        el.classList.add("time-label");
         el.textContent = t;
         el.style.fontWeight = "500";
         el.style.fontSize = "12px";
@@ -792,16 +809,18 @@
       const labLabel = document.createElement("div");
       labLabel.textContent = "LAB";
       labLabel.style.fontWeight = "bold";
-      labLabel.className = "header-cell";
+      labLabel.className = "header-cell time-label";
       grid.appendChild(labLabel);
 
       labTimes.forEach((t, i) => {
         if (i === 6) {
           const lunch = document.createElement("div");
+          lunch.classList.add("time-label");
           lunch.style.background = "";
           grid.appendChild(lunch);
         }
-        const el = document.createElement("div");
+        const el = document.createElement("div");  
+        el.classList.add("time-label");      
         el.textContent = t;
         el.style.fontSize = "12px";
         el.style.opacity = "0.7";
@@ -1268,6 +1287,13 @@
       renderMatrix();
     }
 
+
+    if(window.innerWidth < 900){
+      document.querySelector(".linkCopy")
+        .textContent = "Share";
+    }
+
+
   </script>
 
   <style>
@@ -1283,9 +1309,37 @@
 
     }
 
-    @media (max-width: 480px) {
-      html {
-        font-size: 13px;
-      }
+    @media (min-width: 901px) {
+    .showTiming {
+      display: none;
     }
+  }
+
+  @media (max-width: 900px){
+
+
+    .time-label{
+      display:none;
+    }
+
+    body.show-timings .time-label{
+      display:flex;
+    }
+
+    #header p{
+        display:none;
+    }
+
+    h1{
+        font-size:1.8rem;
+    }
+
+
+    .linkCopy, .showTiming{
+      padding:0.45rem 0.8rem;
+      font-size:0.9rem;
+      margin-top:0;
+  }
+
+}
   </style>
