@@ -96,6 +96,8 @@
       gap: 0.125rem;
       padding: 0.125rem;
       border-radius: 0.375rem;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
       background: #0f172a;
 
       overflow-x: auto;
@@ -258,29 +260,70 @@
     }
 
     #matrixContainer {
-      margin-top: 0.625rem;
+        width:100%;
+        
+        background:#0f172a;
+        border-top: none;
+
+        overflow:hidden;
+    }
+
+
+    #matrixEmpty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 80px;
+
+    color: #64748B;
+    font-size: 1.1rem;
+    font-weight: 600;
+
+    border-top: 1px solid #1e293b;
+}
+
+    #matrix {
+        display: none;
+    }
+
+
+    #matrix input::placeholder {
+        font-size: 0.89rem;
+        color: #64748B;
+        opacity: 1;
+    }
+
+    #matrix input:focus::placeholder {
+        opacity: 0.5;
     }
 
     table {
       width: 100%;
-      max-width: 26.25rem;
 
       border-collapse: collapse;
       background: #020617;
 
+
       border: 0.0625rem solid #1e293b;
+      margin-top: 20px;
     }
 
-    th {
-      font-size: 0.6875rem;
-      color: #64748B;
-    }
+
 
     td,
     th {
+      font-size: 0.89rem;
       padding: 0.375rem;
       border-bottom: 0.0625rem solid #1e293b;
     }
+
+    th {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #64748B;
+    }
+
 
     input {
       width: 100%;
@@ -334,7 +377,6 @@
         </p>
       </div>
       <div style="display: inline-block; text-align: right;">
-        <p>Share your timetable with friends</p>
         <button onclick="copyShareLink()" class="linkCopy">Share timetable</button>
       </div>
     </div>
@@ -342,14 +384,20 @@
     <div id="popover"></div>
     <div id="grid"></div>
 
-    <button id="toggleMatrix">Toggle Subjects</button>
 
     <div id="matrixContainer">
+
+      <div id="matrixEmpty">
+        &#128070; Click any slot above to begin
+      </div>
+
       <table id="matrix">
         <thead>
           <tr>
-            <th>Subject</th>
-            <th>Teacher</th>
+            <th style="width: 66px;">s.no</th>
+            <th>slots</th>
+            <th>subject</th>
+            <th>teacher</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -359,7 +407,7 @@
   </div>
 
 
-  <div style="max-width:700px;margin:40px auto;color:#94A3B8;">
+  <div style="max-width:700px;margin:40px auto; margin-top: 150px; color:#94A3B8;">
     <summary style="cursor:pointer;color:#E2E8F0;font-weight:600;">
       About this VIT FFCS Planner
     </summary>
@@ -1107,45 +1155,66 @@
     // ---------- MATRIX ----------
 
     function renderMatrix() {
-      const tbody = document.querySelector("#matrix tbody");
-      tbody.innerHTML = "";
 
-      for (const g in selectedGroups) {
+    const tbody = document.querySelector("#matrix tbody");
+    const table = document.getElementById("matrix");
+    const empty = document.getElementById("matrixEmpty");
+
+    tbody.innerHTML = "";
+
+    const groups = Object.keys(selectedGroups);
+
+    if (groups.length === 0) {
+        table.style.display = "none";
+        empty.style.display = "flex";
+        return;
+    }
+
+    table.style.display = "table";
+    empty.style.display = "none";
+
+    let sno = 1;
+
+    for (const g of groups) {
+
         const tr = document.createElement("tr");
 
-        const td1 = document.createElement("td");
-        td1.textContent = selectedGroups[g] === true ? g : selectedGroups[g];
+        const tdSno = document.createElement("td");
+        tdSno.textContent = sno++;
 
-        const td2 = document.createElement("td");
+        const tdSlots = document.createElement("td");
+        tdSlots.textContent = g;
+
+        const tdSubject = document.createElement("td");
+        tdSubject.textContent =
+            selectedGroups[g] === true
+            ? ""
+            : selectedGroups[g];
+
+        const tdTeacher = document.createElement("td");
+
         const input = document.createElement("input");
 
         input.value = teacherData[g] || "";
-        input.oninput = e => teacherData[g] = e.target.value;
+        input.placeholder = "Enter teacher name";
 
-        td2.appendChild(input);
+        input.oninput = e => {
+            teacherData[g] = e.target.value;
+        };
 
-        tr.append(td1, td2);
+        tdTeacher.appendChild(input);
+
+        tr.append(
+            tdSno,
+            tdSlots,
+            tdSubject,
+            tdTeacher
+        );
+
         tbody.appendChild(tr);
-      }
     }
+}
 
-    // ---------- TOGGLE MATRIX ----------
-
-    const toggleMatrixBtn = document.getElementById("toggleMatrix");
-    const matrixContainer = document.getElementById("matrixContainer");
-
-    function updateToggleMatrixLabel() {
-      const isHidden = window.getComputedStyle(matrixContainer).display === "none";
-      toggleMatrixBtn.textContent = isHidden ? "Show Subjects" : "Hide Subjects";
-    }
-
-    toggleMatrixBtn.addEventListener("click", () => {
-      const isHidden = window.getComputedStyle(matrixContainer).display === "none";
-      matrixContainer.style.display = isHidden ? "" : "none";
-      updateToggleMatrixLabel();
-    });
-
-    updateToggleMatrixLabel();
 
     // ---------- INIT ----------
 
