@@ -289,6 +289,7 @@
 
 
     #matrix input::placeholder {
+        text-align: center;
         font-size: 0.89rem;
         color: #64748B;
         opacity: 1;
@@ -315,7 +316,8 @@
     th {
       font-size: 0.89rem;
       padding: 0.375rem;
-      border-bottom: 0.0625rem solid #1e293b;
+      border-bottom: 1px solid #1e293b;
+      border-right: 1px solid #1e293b;
     }
 
     th {
@@ -332,6 +334,8 @@
       color: #E2E8F0;
       font-size: 0.75rem;
       outline: none;
+
+      text-align: center;
     }
 
     input, textarea {
@@ -339,6 +343,7 @@
       -webkit-user-select: text;
     }
 
+    
     #popover div.conflict {
       color: #ff3b3b;
       background: rgba(255, 0, 0, 0.12);
@@ -475,7 +480,6 @@
     let occupied = {};
     let selectedGroups = {};
     let selectedGroupsColors = {};
-    let teacherData = {};
     let cellLabels = {};
     let cellElements = {};
     let activeCell = null;
@@ -592,22 +596,25 @@
 
 
     function generateShareURL() {
-      const parts = [];
 
-      const groups = Object.keys(selectedGroups).sort(); // FIX
+        const records = [];
 
-      for (const g of groups) {
-        const val = selectedGroups[g];
+        const groups = Object.keys(selectedGroups).sort();
 
-        if (val === true) {
-          parts.push(encodeURIComponent(g));
-        } else {
-          parts.push(`${encodeURIComponent(g)}:${encodeURIComponent(val)}`);
+        for (const group of groups) {
+
+            const data = selectedGroups[group];
+
+            records.push([
+                encodeURIComponent(group),
+                encodeURIComponent(data.subject),
+                encodeURIComponent(data.teacher)
+            ].join("|"));
+
         }
-      }
 
-      const param = parts.join(",");
-      return `${window.location.origin}${window.location.pathname}?t=${param}`;
+        return `${window.location.origin}${window.location.pathname}?t=${records.join(",")}`;
+
     }
 
 
@@ -1131,10 +1138,13 @@
         return;
       }
 
-      selectedGroups[group] = subject || true;
+      selectedGroups[group] = {
+          subject: subject || "",
+          teacher: ""
+      };
       selectedGroupsColors[group] = getNextColor();
 
-      const display = subject || group;
+      const display = selectedGroups[group].subject || group;
       const color = selectedGroupsColors[group];
 
       for (const c of cells) {
@@ -1156,7 +1166,6 @@
     function removeGroup(group) {
       delete selectedGroups[group];
       delete selectedGroupsColors[group];
-      delete teacherData[group];
 
       for (const c of slotGroups[group]) {
         delete occupied[c];
@@ -1205,20 +1214,17 @@
         tdSlots.textContent = g;
 
         const tdSubject = document.createElement("td");
-        tdSubject.textContent =
-            selectedGroups[g] === true
-            ? ""
-            : selectedGroups[g];
+        tdSubject.textContent = selectedGroups[g].subject;
 
         const tdTeacher = document.createElement("td");
 
         const input = document.createElement("input");
 
-        input.value = teacherData[g] || "";
+        input.value = selectedGroups[g].teacher;
         input.placeholder = "Enter teacher name";
 
         input.oninput = e => {
-            teacherData[g] = e.target.value;
+            selectedGroups[g].teacher = e.target.value;
         };
 
         tdTeacher.appendChild(input);
@@ -1250,26 +1256,30 @@
       const items = data.split(",");
 
       items.forEach(item => {
-        let [group, subject] = item.split(":");
-        group = decodeURIComponent(group);
-        subject = subject ? decodeURIComponent(subject) : "";
+        const [groupEnc, subjectEnc = "", teacherEnc = ""] = item.split("|");
+        const group = decodeURIComponent(groupEnc);
+        const subject = decodeURIComponent(subjectEnc);
+        const teacher = decodeURIComponent(teacherEnc);
 
         if (!slotGroups[group]) return; // ignore invalid
 
-        subject = subject ? decodeURIComponent(subject) : "";
 
-        applyGroupDirect(group, subject);
+        applyGroupDirect(group, subject, teacher);
       });
     }
 
 
-    function applyGroupDirect(group, subject) {
+    function applyGroupDirect(group, subject, teacher = "") {
       const cells = slotGroups[group];
 
-      selectedGroups[group] = subject || true;
+      selectedGroups[group] = {
+          subject: subject || "",
+          teacher: teacher || ""
+      };
+
       selectedGroupsColors[group] = getNextColor();
 
-      const display = subject || group;
+      const display = selectedGroups[group].subject || group;
       const color = selectedGroupsColors[group];
 
       for (const c of cells) {
@@ -1288,11 +1298,17 @@
     }
 
 
-    if(window.innerWidth < 900){
-      document.querySelector(".linkCopy")
-        .textContent = "Share";
+    const media = window.matchMedia("(max-width: 900px)");
+    const shareBtn = document.querySelector(".linkCopy");
+
+    function updateShareButton(e) {
+        shareBtn.textContent = e.matches
+            ? "Share"
+            : "Share timetable";
     }
 
+    updateShareButton(media);
+    media.addEventListener("change", updateShareButton);
 
   </script>
 
@@ -1316,7 +1332,6 @@
   }
 
   @media (max-width: 900px){
-
 
     .time-label{
       display:none;
